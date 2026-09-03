@@ -1,0 +1,6 @@
+{
+  "name": "周邊商品定價計算器",
+  "description": "專為創作者與品牌設計的周邊商品定價與獲利試算工具，支援金流抽成、多維度成本拆解、目標毛利定價與損益平衡分析。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
