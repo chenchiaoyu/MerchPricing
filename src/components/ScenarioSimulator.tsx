@@ -9,17 +9,20 @@ import {
   PackageCheck,
   CircleDollarSign,
   Boxes,
+  Info,
 } from 'lucide-react';
 import { ProductCalculation, ProjectSummaryData } from '../types';
 
 interface ScenarioSimulatorProps {
   calculations: ProductCalculation[];
   summary: ProjectSummaryData;
+  onOpenGlossary?: (termId?: string) => void;
 }
 
 export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
   calculations,
   summary,
+  onOpenGlossary,
 }) => {
   const [salesRate, setSalesRate] = useState<number>(80); // 預設 80% 銷量
   const [discountRate, setDiscountRate] = useState<number>(0); // 預設 0% 折扣
@@ -41,7 +44,11 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
         ? effectivePrice * ((c.product.designerFeeValue || 0) / 100)
         : c.unitDesignerFee;
 
-    const feePerUnit = effectivePrice * paymentRate + designerFee;
+    const shippingSubsidy = c.product.freeShipping
+      ? (c.product.shippingSubsidy !== undefined ? c.product.shippingSubsidy : 60)
+      : 0;
+
+    const feePerUnit = effectivePrice * paymentRate + designerFee + shippingSubsidy;
     const netPerUnit = effectivePrice - feePerUnit;
 
     const itemRevenue = effectivePrice * soldQty;
@@ -49,7 +56,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
     simulatedNetProfit += netPerUnit * soldQty;
   }
 
-  // 實際扣除前期投入總成本
+  // 實際扣除前期投入總成本 (含開版打樣、包材、裸品硬成本及全場獨立支出/滿額免運吸收)
   const finalBottomLine = simulatedNetProfit - totalUpfront;
   const isProfitable = finalBottomLine >= 0;
 
@@ -68,10 +75,10 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
               </span>
             </div>
             <h3 className="text-xl font-bold text-slate-900 mt-1">
-              展場與銷售情境動態模擬器
+              銷售狀態預估
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              拉動滑桿調節銷量比例與套組折扣，即時預演真實底線獲利與庫存安全感
+              即時調節銷量比例與促銷折價，掌握真實底線淨利
             </p>
           </div>
         </div>
@@ -132,30 +139,79 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
 
         {/* Slider 2: 展場折扣 / 套組促銷 */}
         <div className="bg-slate-50/80 p-5 rounded-xl border border-slate-200/80 space-y-3">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-slate-600 flex items-center gap-1.5">
-              <CircleDollarSign className="w-4 h-4 text-rose-500" />
-              全場套組折扣 / 促銷幅度
-            </span>
-            <span className="font-mono font-bold text-slate-900 text-sm bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-2xs">
-              {discountRate === 0 ? '原價 (無打折)' : `${100 - discountRate} 折 (-${discountRate}%)`}
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div>
+              <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                <CircleDollarSign className="w-4 h-4 text-rose-500" />
+                全商品促銷預估
+              </span>
+              <span className="text-[10px] text-slate-400 block mt-0.5">
+                (全場臨時加碼折價，與各方案獨立折價分開)
+              </span>
+            </div>
+            
+            {/* Custom Direct Input for Discount */}
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-300 focus-within:ring-2 focus-within:ring-rose-500/20 focus-within:border-rose-500 shadow-2xs">
+                <span className="text-xs font-semibold text-slate-400">-</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="any"
+                  value={discountRate === 0 ? '' : discountRate}
+                  placeholder="0"
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                      setDiscountRate(Math.max(0, Math.min(100, Math.round(val * 10) / 10)));
+                    }
+                  }}
+                  className="w-14 text-center font-mono font-bold text-slate-900 text-sm focus:outline-none"
+                />
+                <span className="text-xs font-bold text-slate-600">% 全場折讓</span>
+              </div>
+              <span className="font-mono font-bold text-rose-600 text-xs bg-rose-50 px-2 py-1 rounded-lg border border-rose-200">
+                {discountRate === 0
+                  ? '維持各品項售價'
+                  : `全場 ${(100 - discountRate) % 10 === 0 ? (100 - discountRate) / 10 : 100 - discountRate} 折`}
+              </span>
+            </div>
           </div>
+
           <input
             type="range"
             min="0"
-            max="30"
-            step="5"
+            max="60"
+            step="1"
             value={discountRate}
-            onChange={(e) => setDiscountRate(parseInt(e.target.value, 10))}
-            className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+            onChange={(e) => setDiscountRate(parseFloat(e.target.value) || 0)}
+            className="w-full accent-rose-500 h-2 bg-slate-200 rounded-lg cursor-pointer"
           />
-          <div className="flex justify-between text-[10px] font-mono text-slate-400">
-            <span>原價 (0%)</span>
-            <span>95 折</span>
-            <span>90 折</span>
-            <span>85 折</span>
-            <span>70 折 (特惠)</span>
+
+          {/* Quick Preset Buttons for Discount */}
+          <div className="flex items-center justify-between gap-1 flex-wrap pt-1">
+            {[
+              { label: '原價 (0%)', val: 0 },
+              { label: '95 折 (-5%)', val: 5 },
+              { label: '9 折 (-10%)', val: 10 },
+              { label: '85 折 (-15%)', val: 15 },
+              { label: '8 折 (-20%)', val: 20 },
+              { label: '7 折 (-30%)', val: 30 },
+            ].map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => setDiscountRate(p.val)}
+                className={`px-2 py-1 text-[10px] font-semibold rounded-md transition-all cursor-pointer ${
+                  discountRate === p.val
+                    ? 'bg-rose-500 text-white shadow-2xs'
+                    : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-100'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -198,8 +254,18 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({
           }`}
         >
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500 flex items-center gap-1">
               {isProfitable ? '實收純利潤 (入袋)' : '尚未回本資金缺口'}
+              {onOpenGlossary && (
+                <button
+                  type="button"
+                  onClick={() => onOpenGlossary('net-profit')}
+                  className="text-slate-400 hover:text-emerald-700 cursor-pointer"
+                  title="名詞說明：什麼是純淨利？"
+                >
+                  <Info className="w-3 h-3" />
+                </button>
+              )}
             </span>
             {isProfitable ? (
               <span className="px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-bold">

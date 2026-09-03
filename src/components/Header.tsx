@@ -2,24 +2,27 @@ import React from 'react';
 import {
   Sparkles,
   Download,
-  Copy,
   Settings,
   RotateCcw,
-  Check,
   PackagePlus,
   Coins,
   BookOpen,
+  HelpCircle,
+  FileSpreadsheet,
 } from 'lucide-react';
-import { GlobalSettings, ProductCalculation, ProjectSummaryData } from '../types';
-import { exportToCSV, copySummaryText } from '../utils/pricing';
+import { GlobalSettings, ProductCalculation, ProjectSummaryData, OverheadExpenses } from '../types';
+import { exportToCSV } from '../utils/pricing';
 
 interface HeaderProps {
   calculations: ProductCalculation[];
   summary: ProjectSummaryData;
   globalSettings: GlobalSettings;
+  overheadExpenses?: OverheadExpenses;
   onOpenPresetModal: () => void;
   onOpenSettingsModal: () => void;
   onOpenReadmeModal: () => void;
+  onOpenGlossaryModal: () => void;
+  onOpenCsvImportModal: () => void;
   onResetData: () => void;
   onAddNewProduct: () => void;
 }
@@ -28,24 +31,17 @@ export const Header: React.FC<HeaderProps> = ({
   calculations,
   summary,
   globalSettings,
+  overheadExpenses,
   onOpenPresetModal,
   onOpenSettingsModal,
   onOpenReadmeModal,
+  onOpenGlossaryModal,
+  onOpenCsvImportModal,
   onResetData,
   onAddNewProduct,
 }) => {
-  const [copied, setCopied] = React.useState(false);
-
-  const handleCopy = () => {
-    const text = copySummaryText(calculations, summary);
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
   const handleExport = () => {
-    exportToCSV(calculations, globalSettings, summary);
+    exportToCSV(calculations, globalSettings, summary, overheadExpenses);
   };
 
   return (
@@ -73,14 +69,24 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* README Guide Button */}
+          {/* Guide Button */}
           <button
             onClick={onOpenReadmeModal}
             className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100/90 border border-indigo-200/80 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
-            title="查看使用說明與直接使用網址"
+            title="查看完整操作流程、新手指南與注意事項"
           >
             <BookOpen className="w-4 h-4 text-indigo-600" />
-            <span>README 使用說明</span>
+            <span>使用說明</span>
+          </button>
+
+          {/* Glossary Terms Button */}
+          <button
+            onClick={onOpenGlossaryModal}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-purple-700 bg-purple-50/80 hover:bg-purple-100/90 border border-purple-200/80 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
+            title="查看毛利率、純淨利、BEP 損益平衡等名詞解析"
+          >
+            <HelpCircle className="w-4 h-4 text-purple-600" />
+            <span>專有名詞</span>
           </button>
 
           {/* Presets Button */}
@@ -112,23 +118,14 @@ export const Header: React.FC<HeaderProps> = ({
             <Settings className="w-4 h-4" />
           </button>
 
-          {/* Copy Summary Button */}
+          {/* Import CSV Button */}
           <button
-            onClick={handleCopy}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
-            title="複製文字摘要以傳送至 LINE 或社群"
+            onClick={onOpenCsvImportModal}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100/90 border border-indigo-200/80 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
+            title="貼上或上傳 CSV 範本快速匯入商品並開始編輯"
           >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-emerald-700 font-bold">已複製！</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5 text-slate-400" />
-                <span>複製企劃摘要</span>
-              </>
-            )}
+            <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-600" />
+            <span>匯入 CSV</span>
           </button>
 
           {/* Export CSV Button */}

@@ -22,6 +22,7 @@ import {
   Sparkles,
   ShieldCheck,
   CheckCircle2,
+  Truck,
 } from 'lucide-react';
 import { ProductCalculation, ProjectSummaryData } from '../types';
 
@@ -34,11 +35,14 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
   calculations,
   summary,
 }) => {
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+
   // Aggregate breakdown
   let totalBaseCost = 0;
   let totalSampleCost = 0;
   let totalPackagingCost = 0;
   let totalShippingCost = 0;
+  let totalProductShippingSubsidy = 0;
   let totalPaymentFee = 0;
   let totalDesignerFee = 0;
   let totalNetProfit = 0;
@@ -50,46 +54,74 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
     totalSampleCost += c.unitSampleCost * qty;
     totalPackagingCost += c.unitPackagingCost * qty;
     totalShippingCost += c.unitShippingCost * qty;
+    totalProductShippingSubsidy += (c.totalShippingSubsidy || 0);
     totalPaymentFee += c.unitPaymentFee * qty;
     totalDesignerFee += c.unitDesignerFee * qty;
     totalNetProfit += c.unitNetProfit * qty;
     totalRevenue += c.finalUnitPrice * qty;
   }
 
+  // Final net profit taking into account global overhead expenses
+  const finalProjectProfit = summary.totalPotentialProfit;
+  const overheadCost = summary.totalOverheadCost || 0;
+  const totalShippingSubsidy = summary.totalShippingSubsidy || totalProductShippingSubsidy;
+
   const rawProductionCost = totalBaseCost + totalSampleCost;
-  const rawPackagingShipping = totalPackagingCost + totalShippingCost;
 
   // Donut chart data for the overall pie
   const pieData = [
     {
       name: '純淨利潤 (實拿)',
-      value: Math.max(0, Math.round(totalNetProfit)),
+      value: Math.max(0, Math.round(finalProjectProfit)),
       color: '#10B981', // Emerald
       icon: TrendingUp,
-      desc: '扣除所有成本與抽成後最終入袋獲利',
+      desc: '扣除所有製作、金流抽成與全場獨立支出後最終入袋獲利',
     },
     {
-      name: '裸品與開版製造',
+      name: '裸品與開版打樣製造',
       value: Math.round(rawProductionCost),
       color: '#3B82F6', // Royal Blue
       icon: Layers,
-      desc: '包含工廠裸品壓克力/印製與打樣開版費',
+      desc: '包含工廠單件裸品印製與開版打樣費',
     },
     {
-      name: '包材與物流運費',
-      value: Math.round(rawPackagingShipping),
+      name: '商品包材耗材費',
+      value: Math.round(totalPackagingCost),
       color: '#8B5CF6', // Purple
       icon: Wallet,
-      desc: '自黏袋、背卡、飛機盒與進出貨運費',
-    },
-    {
-      name: '金流手續費 (通道)',
-      value: Math.round(totalPaymentFee),
-      color: '#F59E0B', // Amber
-      icon: Receipt,
-      desc: '刷卡、綠界、蝦皮等支付平台交易抽成',
+      desc: '自黏袋、背卡、獨立包裝袋等',
     },
   ];
+
+  if (overheadCost > 0) {
+    pieData.push({
+      name: '全場獨立支出 (運費/人力/雜支)',
+      value: Math.round(overheadCost),
+      color: '#F59E0B', // Amber
+      icon: Layers,
+      desc: '進貨運費、工讀生人力、場地雜支總額',
+    });
+  }
+
+  if (totalShippingSubsidy > 0) {
+    pieData.push({
+      name: '商家吸收免運支出',
+      value: Math.round(totalShippingSubsidy),
+      color: '#0D9488', // Teal
+      icon: Truck,
+      desc: '買家享免運結帳，由商家全額吸收之運費補貼',
+    });
+  }
+
+  if (totalPaymentFee > 0) {
+    pieData.push({
+      name: '金流手續費 (通道)',
+      value: Math.round(totalPaymentFee),
+      color: '#06B6D4', // Cyan
+      icon: Receipt,
+      desc: '刷卡、第三方支付、通路平台手續費',
+    });
+  }
 
   if (totalDesignerFee > 0) {
     pieData.push({
@@ -97,7 +129,7 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
       value: Math.round(totalDesignerFee),
       color: '#EC4899', // Pink
       icon: Sparkles,
-      desc: '授權分潤或固定稿件抽成分紅',
+      desc: '授權分潤或依淨利比例拆成',
     });
   }
 
@@ -116,8 +148,8 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
     毛利率: c.grossMargin,
   }));
 
-  const profitRate = totalRevenue > 0 ? (totalNetProfit / totalRevenue) * 100 : 0;
-  const costRate = totalRevenue > 0 ? ((totalRevenue - totalNetProfit) / totalRevenue) * 100 : 0;
+  const profitRate = totalRevenue > 0 ? (finalProjectProfit / totalRevenue) * 100 : 0;
+  const costRate = totalRevenue > 0 ? ((totalRevenue - finalProjectProfit) / totalRevenue) * 100 : 0;
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-6 sm:p-8 space-y-8">
@@ -137,10 +169,10 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
               </span>
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">
-              全品項整體金流與成本利潤組成分析
+              營業額總欄
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              一眼洞悉營收流向：清晰對比製造成本、包材物流、金流抽成與實拿純利佔比
+              一眼洞悉營收流向：清晰對比製造成本、包材耗材、全場獨立支出與實拿純淨利佔比
             </p>
           </div>
         </div>
@@ -150,7 +182,7 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
           <div className="px-3 py-1 bg-white rounded-lg border border-slate-200/60 text-center shadow-xs">
             <div className="text-[10px] text-slate-500 font-medium">實拿純利潤</div>
             <div className="text-sm font-bold font-mono text-emerald-600">
-              NT$ {Math.round(totalNetProfit).toLocaleString()}
+              NT$ {Math.round(finalProjectProfit).toLocaleString()}
             </div>
           </div>
           <div className="px-3 py-1 bg-white rounded-lg border border-slate-200/60 text-center shadow-xs">
@@ -175,76 +207,108 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
           <div className="w-full h-64 relative flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0];
-                      const val = Number(data.value);
-                      const pct = totalRevenue > 0 ? ((val / totalRevenue) * 100).toFixed(1) : 0;
-                      return (
-                        <div className="bg-slate-900 text-white px-3 py-2 rounded-xl text-xs shadow-xl space-y-1">
-                          <div className="font-bold flex items-center gap-1.5">
-                            <span
-                              className="w-2.5 h-2.5 rounded-full"
-                              style={{ backgroundColor: data.payload.color }}
-                            />
-                            {data.name}
-                          </div>
-                          <div className="font-mono text-sm text-emerald-400">
-                            NT$ {val.toLocaleString()} ({pct}%)
-                          </div>
-                          <div className="text-[10px] text-slate-400">{data.payload.desc}</div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
                 <Pie
                   data={validPieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={68}
-                  outerRadius={105}
+                  innerRadius={70}
+                  outerRadius={104}
                   paddingAngle={3}
                   dataKey="value"
+                  isAnimationActive={true}
+                  onMouseLeave={() => setHoveredIndex(null)}
                 >
-                  {validPieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} stroke="#FFFFFF" strokeWidth={2} />
-                  ))}
+                  {validPieData.map((entry, index) => {
+                    const isHovered = hoveredIndex === index;
+                    return (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.color}
+                        stroke={isHovered ? '#1E293B' : '#FFFFFF'}
+                        strokeWidth={isHovered ? 2.5 : 2}
+                        opacity={hoveredIndex === null || isHovered ? 1 : 0.4}
+                        className="transition-all duration-200 cursor-pointer outline-hidden"
+                        onMouseEnter={() => setHoveredIndex(index)}
+                      />
+                    );
+                  })}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
 
-            {/* Centered Donut Summary */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-              <span className="text-[11px] text-slate-400 font-medium tracking-wider uppercase">
-                總預期淨利
-              </span>
-              <span className="text-xl sm:text-2xl font-black font-mono text-slate-900 tracking-tight">
-                NT$ {Math.round(totalNetProfit).toLocaleString()}
-              </span>
-              <span className="text-[10px] text-emerald-600 font-semibold px-2 py-0.5 rounded-full bg-emerald-50 mt-0.5">
-                佔比 {profitRate.toFixed(1)}%
-              </span>
+            {/* Dynamic Center Donut Hub */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4">
+              {hoveredIndex !== null && validPieData[hoveredIndex] ? (
+                (() => {
+                  const item = validPieData[hoveredIndex];
+                  const itemPct = totalRevenue > 0 ? ((item.value / totalRevenue) * 100).toFixed(1) : '0';
+                  return (
+                    <div className="flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-150">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 max-w-[130px] truncate">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="truncate">{item.name}</span>
+                      </div>
+                      <span className="text-xl sm:text-2xl font-black font-mono text-slate-900 tracking-tight mt-0.5">
+                        NT$ {item.value.toLocaleString()}
+                      </span>
+                      <span
+                        className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full mt-1 border"
+                        style={{
+                          backgroundColor: `${item.color}15`,
+                          borderColor: `${item.color}40`,
+                          color: item.color,
+                        }}
+                      >
+                        佔比 {itemPct}%
+                      </span>
+                    </div>
+                  );
+                })()
+              ) : (
+                <div className="flex flex-col items-center justify-center animate-in fade-in duration-200">
+                  <span className="text-[11px] text-slate-400 font-bold tracking-wider uppercase">
+                    總預期淨利
+                  </span>
+                  <span className="text-xl sm:text-2xl font-black font-mono text-emerald-600 tracking-tight mt-0.5">
+                    NT$ {Math.round(finalProjectProfit).toLocaleString()}
+                  </span>
+                  <span className="text-[10px] text-emerald-700 font-bold px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/80 mt-1">
+                    佔比 {profitRate.toFixed(1)}%
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
           <div className="text-center text-xs text-slate-400 mt-2 flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>數值隨所有品項成本、售價與銷售數量即時聯動</span>
+            <span>移動游標至各區塊，中心即時顯示該支出佔比與金額</span>
           </div>
         </div>
 
         {/* Right: Legend Breakdown List */}
         <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {validPieData.map((item) => {
+          {validPieData.map((item, index) => {
             const Icon = item.icon;
             const pct = totalRevenue > 0 ? ((item.value / totalRevenue) * 100).toFixed(1) : '0';
+            const isHovered = hoveredIndex === index;
             return (
               <div
                 key={item.name}
-                className="p-4 rounded-xl border border-slate-100 bg-slate-50/70 hover:bg-white hover:border-slate-300/80 transition-all shadow-xs flex flex-col justify-between group"
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                className={`p-4 rounded-xl border transition-all duration-150 shadow-xs flex flex-col justify-between cursor-pointer ${
+                  isHovered
+                    ? 'bg-white ring-2 shadow-md -translate-y-0.5'
+                    : 'bg-slate-50/70 border-slate-100 hover:bg-white hover:border-slate-300/80'
+                }`}
+                style={{
+                  ringColor: isHovered ? item.color : 'transparent',
+                  borderColor: isHovered ? item.color : undefined,
+                }}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
@@ -267,14 +331,14 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
                       {pct}%
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-2">
+                  <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">
                     {item.desc}
                   </p>
                 </div>
 
                 <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between">
                   <span className="text-[10px] text-slate-400 uppercase font-medium">總計金額</span>
-                  <span className="font-mono font-bold text-sm text-slate-900 group-hover:scale-105 transition-transform">
+                  <span className="font-mono font-bold text-sm text-slate-900">
                     NT$ {item.value.toLocaleString()}
                   </span>
                 </div>

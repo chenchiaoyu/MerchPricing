@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, Copy, AlertCircle, Sparkles } from 'lucide-react';
+import { Trash2, Copy, AlertCircle, Sparkles, Info, Eye, EyeOff } from 'lucide-react';
 import { ProductCalculation, ProductItem, GlobalSettings } from '../types';
 import { NumericInput } from './NumericInput';
 import { CARD_COLOR_THEMES } from './ProductCard';
@@ -10,6 +10,7 @@ interface ProductTableProps {
   onUpdate: (id: string, updates: Partial<ProductItem>) => void;
   onDelete: (id: string) => void;
   onDuplicate: (product: ProductItem) => void;
+  onOpenGlossary?: (termId?: string) => void;
 }
 
 export const ProductTable: React.FC<ProductTableProps> = ({
@@ -17,6 +18,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onUpdate,
   onDelete,
   onDuplicate,
+  onOpenGlossary,
 }) => {
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
@@ -26,16 +28,58 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 text-[11px] uppercase tracking-wider font-bold">
               <th className="py-3 px-4 min-w-[170px]">商品名稱</th>
               <th className="py-3 px-3 text-right">產量</th>
-              <th className="py-3 px-3 text-right">裸品成本</th>
-              <th className="py-3 px-3 text-right">開版/包材/運費</th>
+              <th className="py-3 px-3 text-right">單件製作費</th>
+              <th className="py-3 px-3 text-right">開版打樣/包材</th>
               <th className="py-3 px-3 text-right">直接製造費</th>
               <th className="py-3 px-3 min-w-[120px]">定價驅動</th>
               <th className="py-3 px-3 text-right">設定參數</th>
               <th className="py-3 px-3 text-right">建議定價</th>
-              <th className="py-3 px-3 text-right">單件實賺</th>
-              <th className="py-3 px-3 text-right">毛利率</th>
-              <th className="py-3 px-3 text-right">保本件數</th>
-              <th className="py-3 px-3 text-right">預期總利潤</th>
+              <th className="py-3 px-3 text-right">
+                <span className="inline-flex items-center gap-1 justify-end">
+                  單件實賺
+                  {onOpenGlossary && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenGlossary('net-profit')}
+                      className="text-slate-400 hover:text-emerald-700 cursor-pointer"
+                      title="名詞說明：什麼是純淨利？"
+                    >
+                      <Info className="w-3 h-3" />
+                    </button>
+                  )}
+                </span>
+              </th>
+              <th className="py-3 px-3 text-right">
+                <span className="inline-flex items-center gap-1 justify-end">
+                  毛利率
+                  {onOpenGlossary && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenGlossary('gross-margin')}
+                      className="text-slate-400 hover:text-purple-600 cursor-pointer"
+                      title="名詞說明：什麼是毛利率？"
+                    >
+                      <Info className="w-3 h-3" />
+                    </button>
+                  )}
+                </span>
+              </th>
+              <th className="py-3 px-3 text-right">
+                <span className="inline-flex items-center gap-1 justify-end">
+                  保本件數 (BEP)
+                  {onOpenGlossary && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenGlossary('bep')}
+                      className="text-slate-400 hover:text-amber-600 cursor-pointer"
+                      title="名詞說明：什麼是損益平衡點 (BEP)？"
+                    >
+                      <Info className="w-3 h-3" />
+                    </button>
+                  )}
+                </span>
+              </th>
+              <th className="py-3 px-3 text-right">預期總淨利</th>
               <th className="py-3 px-3 text-center">操作</th>
             </tr>
           </thead>
@@ -43,22 +87,63 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             {calculations.map((c, idx) => {
               const p = c.product;
               const unitOtherCosts =
-                c.unitSampleCost + c.unitPackagingCost + c.unitShippingCost + c.unitExtraCost;
+                c.unitSampleCost + c.unitPackagingCost + c.unitShippingCost + (c.unitLaborCost || 0) + c.unitExtraCost;
               const theme = CARD_COLOR_THEMES[idx % CARD_COLOR_THEMES.length];
 
+              const isExcluded = p.enabled === false;
+
               return (
-                <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                <tr
+                  key={p.id}
+                  className={`transition-colors ${
+                    isExcluded ? 'bg-slate-100/50 opacity-60' : 'hover:bg-slate-50/60'
+                  }`}
+                >
                   {/* Name */}
                   <td className="py-3 px-4 font-medium">
                     <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onUpdate(p.id, { enabled: isExcluded ? true : false })}
+                        className="text-slate-400 hover:text-indigo-600 cursor-pointer"
+                        title={isExcluded ? '點擊納入全場總計' : '點擊排除不計入總計'}
+                      >
+                        {!isExcluded ? (
+                          <Eye className="w-4 h-4 text-indigo-600" />
+                        ) : (
+                          <EyeOff className="w-4 h-4 text-slate-400" />
+                        )}
+                      </button>
                       <span className={`w-2 h-2 rounded-full shrink-0 ${theme.borderTop}`} />
                       <div className="w-full">
-                        <input
-                          type="text"
-                          value={p.name}
-                          onChange={(e) => onUpdate(p.id, { name: e.target.value })}
-                          className="w-full font-bold text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-600 outline-hidden pb-0.5"
-                        />
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <input
+                            type="text"
+                            value={p.name}
+                            onChange={(e) => onUpdate(p.id, { name: e.target.value })}
+                            className="font-bold text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-600 outline-hidden pb-0.5"
+                          />
+                          {isExcluded && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 bg-slate-200 text-slate-600 rounded">
+                              已排除
+                            </span>
+                          )}
+                          {c.bundleUnits > 1 && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 bg-indigo-100 text-indigo-700 rounded">
+                              {c.bundleUnits}件組
+                            </span>
+                          )}
+                          {c.discountPercent > 0 && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 bg-emerald-100 text-emerald-700 rounded">
+                              {c.discountPercent}% off
+                            </span>
+                          )}
+                          {p.freeShipping && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 bg-teal-100 text-teal-800 rounded">
+                              免運(吸收${c.unitShippingSubsidy})
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[10px] font-mono text-slate-400">
                           {p.category || '周邊'}
                         </div>
@@ -113,9 +198,9 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                       onChange={(e) => onUpdate(p.id, { pricingMode: e.target.value as any })}
                       className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs outline-hidden focus:border-indigo-600"
                     >
-                      <option value="margin">依毛利率</option>
                       <option value="price">市場售價</option>
-                      <option value="profit">總淨利目標</option>
+                      <option value="profit">總獲利目標</option>
+                      <option value="margin">目標毛利率</option>
                     </select>
                   </td>
 
@@ -199,6 +284,18 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   {/* Actions */}
                   <td className="py-3 px-3 text-center">
                     <div className="inline-flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => onUpdate(p.id, { enabled: isExcluded ? true : false })}
+                        className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                          !isExcluded
+                            ? 'text-indigo-600 hover:bg-indigo-50'
+                            : 'text-slate-400 hover:bg-slate-100'
+                        }`}
+                        title={isExcluded ? '納入全場總計' : '排除不計入總計'}
+                      >
+                        {!isExcluded ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                      </button>
                       <button
                         onClick={() => onDuplicate(p)}
                         className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"

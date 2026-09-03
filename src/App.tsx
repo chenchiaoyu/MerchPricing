@@ -11,10 +11,11 @@ import {
   Info,
   Layers,
 } from 'lucide-react';
-import { ProductItem, GlobalSettings } from './types';
+import { ProductItem, GlobalSettings, OverheadExpenses } from './types';
 import { calculateProduct, calculateProjectSummary } from './utils/pricing';
 import { Header } from './components/Header';
 import { ProjectSummary } from './components/ProjectSummary';
+import { OverheadExpensesCard } from './components/OverheadExpensesCard';
 import { ProductCard } from './components/ProductCard';
 import { ProductTable } from './components/ProductTable';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
@@ -22,10 +23,13 @@ import { FinancialCompositionChart } from './components/FinancialCompositionChar
 import { PresetModal } from './components/PresetModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ReadmeModal } from './components/ReadmeModal';
+import { GlossaryModal } from './components/GlossaryModal';
+import { CsvImportModal } from './components/CsvImportModal';
 import { MerchandisePreset } from './data/presets';
 
-const STORAGE_KEY_PRODUCTS = 'merch_pricing_products_v2';
-const STORAGE_KEY_SETTINGS = 'merch_pricing_settings_v2';
+const STORAGE_KEY_PRODUCTS = 'merch_pricing_products_v3';
+const STORAGE_KEY_SETTINGS = 'merch_pricing_settings_v3';
+const STORAGE_KEY_OVERHEAD = 'merch_pricing_overhead_v3';
 
 const DEFAULT_SETTINGS: GlobalSettings = {
   paymentFeeRate: 2.5,
@@ -34,16 +38,29 @@ const DEFAULT_SETTINGS: GlobalSettings = {
   currency: 'NT$',
 };
 
+const DEFAULT_OVERHEAD: OverheadExpenses = {
+  shippingCost: 0,
+  laborCost: 0,
+  extraCost: 0,
+  customItems: [],
+  freeShippingEnabled: false,
+  freeShippingThreshold: 1000,
+  freeShippingPerOrder: 60,
+  freeShippingEstimatedOrders: 20,
+  freeShippingCost: 1200,
+};
+
 const DEFAULT_PRODUCTS: ProductItem[] = [
   {
-    id: 'prod-1',
-    name: '原創角色雙層壓克力立牌 (8cm)',
+    id: 'prod-sample-1',
+    name: '雙層壓克力立牌 (8cm)',
     category: '壓克力周邊',
-    quantity: 60,
+    quantity: 50,
     baseCost: 45,
     sampleCost: 300,
     packagingCost: 4,
-    shippingCost: 3,
+    shippingCost: 0,
+    laborCost: 0,
     extraCost: 0,
     customFee: false,
     paymentFeeRate: 2.5,
@@ -52,51 +69,35 @@ const DEFAULT_PRODUCTS: ProductItem[] = [
     designerFeeValue: 0,
     pricingMode: 'margin',
     targetMargin: 50,
-    targetTotalProfit: 5000,
+    targetTotalProfit: 4000,
     customPrice: 150,
+    freeShipping: false,
+    shippingSubsidy: 60,
     productionDays: 14,
   },
   {
-    id: 'prod-2',
-    name: '鐳射雙閃馬口鐵胸章 (58mm)',
+    id: 'prod-sample-2',
+    name: '鐳射雙閃胸章套組 (58mm)',
     category: '徽章周邊',
-    quantity: 120,
+    quantity: 80,
     baseCost: 16,
     sampleCost: 150,
     packagingCost: 2,
-    shippingCost: 1.5,
+    shippingCost: 0,
+    laborCost: 0,
     extraCost: 0,
     customFee: false,
     paymentFeeRate: 2.5,
     paymentFixedFee: 0,
     designerFeeType: 'none',
     designerFeeValue: 0,
-    pricingMode: 'margin',
-    targetMargin: 55,
-    targetTotalProfit: 4000,
-    customPrice: 60,
-    productionDays: 10,
-  },
-  {
-    id: 'prod-3',
-    name: '全彩燙金畫冊插畫本 (B5/32P)',
-    category: '紙本刊物',
-    quantity: 80,
-    baseCost: 85,
-    sampleCost: 500,
-    packagingCost: 6,
-    shippingCost: 4,
-    extraCost: 0,
-    customFee: false,
-    paymentFeeRate: 2.5,
-    paymentFixedFee: 0,
-    designerFeeType: 'percent_price',
-    designerFeeValue: 10,
     pricingMode: 'price',
-    targetMargin: 50,
-    targetTotalProfit: 8000,
-    customPrice: 280,
-    productionDays: 20,
+    targetMargin: 55,
+    targetTotalProfit: 3000,
+    customPrice: 80,
+    freeShipping: true,
+    shippingSubsidy: 60,
+    productionDays: 10,
   },
 ];
 
@@ -121,12 +122,30 @@ export function App() {
     return DEFAULT_SETTINGS;
   });
 
+  const [overheadExpenses, setOverheadExpenses] = useState<OverheadExpenses>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_OVERHEAD);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Failed to load overhead from storage', e);
+    }
+    return DEFAULT_OVERHEAD;
+  });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isReadmeModalOpen, setIsReadmeModalOpen] = useState(false);
+  const [isGlossaryModalOpen, setIsGlossaryModalOpen] = useState(false);
+  const [isCsvImportModalOpen, setIsCsvImportModalOpen] = useState(false);
+  const [activeGlossaryTermId, setActiveGlossaryTermId] = useState<string | null>(null);
+
+  const handleOpenGlossary = (termId?: string) => {
+    setActiveGlossaryTermId(termId || null);
+    setIsGlossaryModalOpen(true);
+  };
 
   // Save to local storage
   useEffect(() => {
@@ -145,6 +164,14 @@ export function App() {
     }
   }, [globalSettings]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_OVERHEAD, JSON.stringify(overheadExpenses));
+    } catch (e) {
+      console.error('Failed to save overhead to storage', e);
+    }
+  }, [overheadExpenses]);
+
   // Perform Calculations
   const calculations = useMemo(() => {
     return products.map((product) => calculateProduct(product, globalSettings));
@@ -152,8 +179,8 @@ export function App() {
 
   // Project Summary Data
   const summary = useMemo(() => {
-    return calculateProjectSummary(calculations);
-  }, [calculations]);
+    return calculateProjectSummary(calculations, overheadExpenses);
+  }, [calculations, overheadExpenses]);
 
   // Categories list
   const categories = useMemo(() => {
@@ -196,6 +223,7 @@ export function App() {
       sampleCost: 200,
       packagingCost: 3,
       shippingCost: 2,
+      laborCost: 0,
       extraCost: 0,
       customFee: false,
       paymentFeeRate: globalSettings.paymentFeeRate,
@@ -206,6 +234,8 @@ export function App() {
       targetMargin: globalSettings.defaultTargetMargin,
       targetTotalProfit: 3000,
       customPrice: 120,
+      freeShipping: false,
+      shippingSubsidy: globalSettings.defaultShippingSubsidy !== undefined ? globalSettings.defaultShippingSubsidy : 60,
       productionDays: 14,
     };
     setProducts((prev) => [newProduct, ...prev]);
@@ -221,6 +251,7 @@ export function App() {
       sampleCost: preset.defaultSampleCost,
       packagingCost: preset.defaultPackagingCost,
       shippingCost: preset.defaultShippingCost,
+      laborCost: 0,
       extraCost: 0,
       customFee: false,
       paymentFeeRate: globalSettings.paymentFeeRate,
@@ -231,15 +262,14 @@ export function App() {
       targetMargin: preset.defaultTargetMargin,
       targetTotalProfit: 4000,
       customPrice: 100,
+      freeShipping: false,
+      shippingSubsidy: globalSettings.defaultShippingSubsidy !== undefined ? globalSettings.defaultShippingSubsidy : 60,
       productionDays: preset.defaultProductionDays,
     };
     setProducts((prev) => [newProduct, ...prev]);
   };
 
   const handleDeleteProduct = (id: string) => {
-    if (products.length <= 1) {
-      if (!window.confirm('只剩下一項商品，確定要刪除嗎？')) return;
-    }
     setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
@@ -253,9 +283,18 @@ export function App() {
   };
 
   const handleResetData = () => {
-    if (window.confirm('確定要將所有商品重設為預設範例資料嗎？')) {
-      setProducts(DEFAULT_PRODUCTS);
+    if (window.confirm('確定要清空所有商品資料，重新開始規劃嗎？')) {
+      setProducts([]);
       setGlobalSettings(DEFAULT_SETTINGS);
+      setOverheadExpenses(DEFAULT_OVERHEAD);
+    }
+  };
+
+  const handleImportCsv = (importedProducts: ProductItem[], replace: boolean) => {
+    if (replace) {
+      setProducts(importedProducts);
+    } else {
+      setProducts((prev) => [...prev, ...importedProducts]);
     }
   };
 
@@ -266,9 +305,12 @@ export function App() {
         calculations={calculations}
         summary={summary}
         globalSettings={globalSettings}
+        overheadExpenses={overheadExpenses}
         onOpenPresetModal={() => setIsPresetModalOpen(true)}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onOpenReadmeModal={() => setIsReadmeModalOpen(true)}
+        onOpenGlossaryModal={() => handleOpenGlossary()}
+        onOpenCsvImportModal={() => setIsCsvImportModalOpen(true)}
         onResetData={handleResetData}
         onAddNewProduct={handleAddNewProduct}
       />
@@ -280,9 +322,17 @@ export function App() {
           summary={summary}
           calculations={calculations}
           defaultTargetMargin={globalSettings.defaultTargetMargin}
+          onOpenGlossary={handleOpenGlossary}
         />
 
-        {/* 2. Workspace Filter & Controls */}
+        {/* 2. Global Shared Overhead Expenses (Shipping, Labor, Extra Supplies) */}
+        <OverheadExpensesCard
+          expenses={overheadExpenses}
+          onChange={setOverheadExpenses}
+          onOpenGlossary={handleOpenGlossary}
+        />
+
+        {/* 3. Workspace Filter & Controls */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
           {/* Search and Category Filter */}
           <div className="flex items-center gap-3 flex-1 flex-wrap sm:flex-nowrap">
@@ -356,7 +406,37 @@ export function App() {
         </div>
 
         {/* 3. Products List View (Cards or Table) */}
-        {filteredCalculations.length === 0 ? (
+        {products.length === 0 ? (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-12 sm:p-16 text-center space-y-4 shadow-2xs">
+            <div className="w-14 h-14 bg-indigo-50 text-indigo-600 mx-auto rounded-2xl flex items-center justify-center border border-indigo-100 shadow-xs">
+              <PackagePlus className="w-7 h-7" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base sm:text-lg font-bold text-slate-800">目前尚無規劃中的周邊品項</h3>
+              <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                您可以點擊上方「<strong>常用周邊規格範本</strong>」一鍵帶入壓克力立牌、胸章或畫冊行情，或點擊「<strong>新增品項</strong>」自由建立商品！
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setIsPresetModalOpen(true)}
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-xl transition-all shadow-sm shadow-amber-500/20 flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>瀏覽規格範本庫</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleAddNewProduct}
+                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl transition-all shadow-sm shadow-indigo-600/20 flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <PackagePlus className="w-4 h-4" />
+                <span>新增第一個品項</span>
+              </button>
+            </div>
+          </div>
+        ) : filteredCalculations.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center space-y-3 shadow-2xs">
             <div className="w-12 h-12 bg-slate-50 text-slate-400 mx-auto rounded-2xl flex items-center justify-center border border-slate-200">
               <Search className="w-5 h-5" />
@@ -386,6 +466,7 @@ export function App() {
                 onUpdate={handleUpdateProduct}
                 onDelete={handleDeleteProduct}
                 onDuplicate={handleDuplicateProduct}
+                onOpenGlossary={handleOpenGlossary}
               />
             ))}
           </div>
@@ -396,39 +477,29 @@ export function App() {
             onUpdate={handleUpdateProduct}
             onDelete={handleDeleteProduct}
             onDuplicate={handleDuplicateProduct}
+            onOpenGlossary={handleOpenGlossary}
           />
         )}
 
         {/* 4. Sales Sensitivity Scenario Simulator */}
-        <ScenarioSimulator calculations={calculations} summary={summary} />
+        <ScenarioSimulator
+          calculations={calculations}
+          summary={summary}
+          onOpenGlossary={handleOpenGlossary}
+        />
 
         {/* 5. Overall Financial Composition Chart (Costs, Profit, Royalties, Platform Fees) */}
         <FinancialCompositionChart calculations={calculations} summary={summary} />
 
-        {/* 6. Footer Information & Quick README Access Bar */}
-        <div className="pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 pb-8">
-          <div className="flex items-center gap-2">
+        {/* 6. Footer Information & Credit */}
+        <div className="pt-6 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 pb-8">
+          <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
             <span className="font-semibold text-slate-700">周邊定價計算器 MerchPricing</span>
-            <span>・</span>
-            <span>專為文創同人創作者打造</span>
+            <span className="hidden sm:inline">・</span>
+            <span>開源專案採用自 <strong className="text-indigo-600 font-semibold">chiaoyu_design</strong></span>
           </div>
-
-          <div className="flex items-center gap-3 flex-wrap justify-center">
-            <button
-              type="button"
-              onClick={() => setIsReadmeModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold border border-indigo-200/80 transition-colors cursor-pointer shadow-2xs"
-            >
-              <span>📖 開啟 README 使用手冊與連結</span>
-            </button>
-            <a
-              href="https://chenchiaoyu.github.io/MerchPricing/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-600 hover:text-indigo-600 font-mono transition-colors flex items-center gap-1"
-            >
-              <span>chenchiaoyu.github.io/MerchPricing</span>
-            </a>
+          <div className="text-slate-400 text-xs text-center sm:text-right">
+            創作者與同人誌周邊定價專用財務計算工具
           </div>
         </div>
       </main>
@@ -448,6 +519,18 @@ export function App() {
       <ReadmeModal
         isOpen={isReadmeModalOpen}
         onClose={() => setIsReadmeModalOpen(false)}
+        onOpenGlossary={() => handleOpenGlossary()}
+      />
+      <GlossaryModal
+        isOpen={isGlossaryModalOpen}
+        onClose={() => setIsGlossaryModalOpen(false)}
+        initialTermId={activeGlossaryTermId}
+      />
+      <CsvImportModal
+        isOpen={isCsvImportModalOpen}
+        onClose={() => setIsCsvImportModalOpen(false)}
+        onImportProducts={handleImportCsv}
+        currentCount={products.length}
       />
     </div>
   );

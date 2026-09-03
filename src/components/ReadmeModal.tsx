@@ -1,42 +1,30 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   X,
   BookOpen,
-  ExternalLink,
-  Copy,
-  Check,
-  Globe,
   Sparkles,
-  Layers,
-  Calculator,
+  AlertTriangle,
+  Lightbulb,
+  BookMarked,
   Sliders,
   PieChart,
-  Github,
-  CheckCircle2,
-  Share2,
+  FileSpreadsheet,
+  Eye,
+  Tag,
 } from 'lucide-react';
 
 interface ReadmeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenGlossary?: () => void;
 }
 
-export const ReadmeModal: React.FC<ReadmeModalProps> = ({ isOpen, onClose }) => {
-  const [copiedLink, setCopiedLink] = useState<string | null>(null);
-
+export const ReadmeModal: React.FC<ReadmeModalProps> = ({
+  isOpen,
+  onClose,
+  onOpenGlossary,
+}) => {
   if (!isOpen) return null;
-
-  const GITHUB_PAGES_URL = 'https://chenchiaoyu.github.io/MerchPricing/';
-  const AI_STUDIO_URL =
-    'https://ais-pre-qwpdawfi6oj7s6nw2qbg7r-578487684233.asia-northeast1.run.app';
-  const GITHUB_REPO_URL = 'https://github.com/chenchiaoyu/MerchPricing';
-
-  const handleCopy = (url: string, key: string) => {
-    navigator.clipboard.writeText(url).then(() => {
-      setCopiedLink(key);
-      setTimeout(() => setCopiedLink(null), 2000);
-    });
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
@@ -49,13 +37,13 @@ export const ReadmeModal: React.FC<ReadmeModalProps> = ({ isOpen, onClose }) => 
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-slate-900">使用說明書・README</h3>
+                <h3 className="text-lg font-bold text-slate-900">使用說明</h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  v2.0
+                  操作手冊與功能導覽
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                周邊商品定價計算機操作手冊與線上即時網址
+                周邊商品定價計算機使用流程、避坑注意事項與功能解析
               </p>
             </div>
           </div>
@@ -69,195 +57,188 @@ export const ReadmeModal: React.FC<ReadmeModalProps> = ({ isOpen, onClose }) => 
 
         {/* Modal Content */}
         <div className="p-6 overflow-y-auto space-y-6 text-slate-700 text-xs sm:text-sm leading-relaxed">
-          {/* Direct Live Website Links Box */}
-          <div className="bg-gradient-to-br from-indigo-50/90 via-blue-50/50 to-purple-50/40 p-5 rounded-2xl border border-indigo-100 shadow-2xs space-y-3.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-indigo-600" />
-                <span className="font-bold text-slate-900 text-sm">
-                  線上使用網址 (Live URL)
-                </span>
-              </div>
-              <span className="text-[10px] font-mono font-semibold text-indigo-700 bg-white px-2 py-0.5 rounded-md border border-indigo-200">
-                點擊可直接開啟或複製分享
+          {/* Open Source Statement & Credit Box */}
+          <div className="bg-amber-50/70 border border-amber-200/90 rounded-2xl p-4 sm:p-5 space-y-2">
+            <div className="flex items-center gap-2 text-amber-900 font-bold text-xs sm:text-sm">
+              <Sparkles className="w-4 h-4 text-amber-600" />
+              <span>開源聲明與引用鳴謝 (Credit & License)</span>
+            </div>
+            <p className="text-xs text-amber-800/90 leading-relaxed">
+              原則上這個網頁工具希望大家都可以<strong>自由開源或進行客製化模改使用</strong>。但如果可以的話，可以請任何如果要使用或引用這個版本的人，再幫我加入：
+            </p>
+            <div className="p-2.5 bg-white/95 rounded-xl border border-amber-200 font-mono text-xs font-semibold text-slate-800 flex items-center justify-between">
+              <span>「採用自 chiaoyu_design」</span>
+              <span className="text-[10px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md font-sans font-semibold">
+                感謝支持創作者！
               </span>
-            </div>
-
-            {/* Primary GitHub Pages Link */}
-            <div className="bg-white p-3.5 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-              <div className="space-y-0.5 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                    GitHub Pages 正式版
-                  </span>
-                  <span className="text-xs font-semibold text-slate-700">官方線上站點</span>
-                </div>
-                <div className="font-mono text-xs text-indigo-600 truncate font-medium">
-                  {GITHUB_PAGES_URL}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => handleCopy(GITHUB_PAGES_URL, 'pages')}
-                  className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                >
-                  {copiedLink === 'pages' ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-emerald-700">已複製</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-slate-500" />
-                      <span>複製網址</span>
-                    </>
-                  )}
-                </button>
-                <a
-                  href={GITHUB_PAGES_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3.5 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <span>直接開啟</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
-            </div>
-
-            {/* Preview and Repo Links */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-              <div className="bg-white/80 p-3 rounded-xl border border-slate-200/80 flex items-center justify-between">
-                <div className="min-w-0 pr-2">
-                  <div className="text-[11px] font-bold text-slate-800 flex items-center gap-1">
-                    <Share2 className="w-3 h-3 text-violet-500" />
-                    AI Studio 備用預覽站
-                  </div>
-                  <div className="font-mono text-[10px] text-slate-500 truncate">
-                    {AI_STUDIO_URL}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleCopy(AI_STUDIO_URL, 'aistudio')}
-                  className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
-                  title="複製網址"
-                >
-                  {copiedLink === 'aistudio' ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  ) : (
-                    <Copy className="w-3.5 h-3.5" />
-                  )}
-                </button>
-              </div>
-
-              <div className="bg-white/80 p-3 rounded-xl border border-slate-200/80 flex items-center justify-between">
-                <div className="min-w-0 pr-2">
-                  <div className="text-[11px] font-bold text-slate-800 flex items-center gap-1">
-                    <Github className="w-3 h-3 text-slate-700" />
-                    GitHub 原始碼倉庫
-                  </div>
-                  <div className="font-mono text-[10px] text-slate-500 truncate">
-                    chenchiaoyu/MerchPricing
-                  </div>
-                </div>
-                <a
-                  href={GITHUB_REPO_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
-                  title="前往 GitHub 專案"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
             </div>
           </div>
 
-          {/* Quick Guide Sections */}
-          <div className="space-y-4">
-            <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-indigo-600" />
-              網頁功能與使用步驟
-            </h4>
+          {/* Section 1: How to Start (Workflow) */}
+          <div className="space-y-3.5">
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-indigo-600" />
+                如何開始？標準企劃使用流程
+              </h4>
+              {onOpenGlossary && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenGlossary();
+                  }}
+                  className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 cursor-pointer"
+                >
+                  <BookMarked className="w-3.5 h-3.5" />
+                  <span>速查專有名詞百科 →</span>
+                </button>
+              )}
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
               {/* Step 1 */}
               <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2 shadow-2xs">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs shrink-0">
                     1
                   </span>
                   <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                    一鍵套用常見範本或新增商品
+                    建立商品品項
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  點擊頂部「<strong>常用周邊規格範本</strong>」，即可一鍵帶入壓克力立牌、馬口鐵胸章、全彩畫冊、帆布袋等業界行情與開版成本；亦可點擊「新增品項」自定義周邊企劃。
+                  點擊頂部「<strong>常用周邊規格範本</strong>」一鍵載入壓克力立牌、雙閃徽章、畫冊本或帆布袋等業界行情；或點擊「<strong>新增商品</strong>」從空白自定義各項周邊企劃。
                 </p>
               </div>
 
               {/* Step 2 */}
               <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2 shadow-2xs">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs shrink-0">
                     2
                   </span>
                   <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                    多維度成本真實拆解
+                    真實拆解各項成本
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  除了裸品製造費，計算機支援攤提「<strong>打樣開版費</strong>」、獨立「<strong>包材/背卡</strong>」、單件「<strong>運費與耗材</strong>」，杜絕漏算隱形支出而虧本。
+                  依序填入裸品單價、總打樣開版費、每件獨立包材背卡、單件平均運費。系統會<strong>自動將固定打樣費均攤至單件</strong>，算出版面最真實的「單件直接硬成本」。
                 </p>
               </div>
 
               {/* Step 3 */}
               <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2 shadow-2xs">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
+                  <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs shrink-0">
                     3
                   </span>
                   <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                    三種彈性定價驅動模式
-                  </span>
-                </div>
-                <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
-                  <li><strong>依目標毛利率</strong>：設定理想毛利（如 50%），自動推導建議定價。</li>
-                  <li><strong>市場售價反推</strong>：輸入想要賣的金額，即時檢視單件實賺與毛利率。</li>
-                  <li><strong>總淨利目標</strong>：設定想為工作室賺取多少利潤，反推定價。</li>
-                </ul>
-              </div>
-
-              {/* Step 4 */}
-              <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2 shadow-2xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
-                    4
-                  </span>
-                  <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                    展場損益平衡與動態情境模擬
+                    定價與損益檢視
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  即時試算各品項需要賣出幾件才能「<strong>保本回本 (BEP)</strong>」。頁面下方更配有「<strong>情境模擬器</strong>」，可拉動銷量比率與套組折扣，預演真實入袋利潤。
+                  可選「<strong>依目標毛利率推導</strong>」（如 50%），或選「<strong>市場售價反推</strong>」即時檢視實質利潤。並關注各品項的「<strong>損益平衡件數 (BEP)</strong>」，確保回本難度在安全範圍。
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Pricing Formula Details */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-            <h5 className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-              <Calculator className="w-4 h-4 text-indigo-600" />
-              核心核心計算公式
-            </h5>
-            <div className="font-mono text-[11px] text-slate-600 space-y-1 bg-white p-3 rounded-lg border border-slate-200/80">
-              <div>• 單件直接製造成本 = 裸品成本 + (打樣費 ÷ 數量) + 包材費 + 運費 + 其他</div>
-              <div>• 建議售價 = (單件直接成本 + 每筆固定金流費) ÷ (1 - 目標毛利率 - 金流抽成% - 繪師抽成%)</div>
-              <div>• 單件純淨利 = 售價 - 單件直接成本 - 金流手續費 - 繪師抽成</div>
-              <div>• 損益平衡件數 (BEP) = 總投入固定成本 ÷ (售價 - 單件變動成本與抽成)</div>
+          {/* Section 2: Important Precautions (Avoid Pitfalls) */}
+          <div className="bg-rose-50/50 border border-rose-200/80 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center gap-2 text-rose-900 font-bold text-xs sm:text-sm">
+              <AlertTriangle className="w-4 h-4 text-rose-600" />
+              <span>重要注意事項與避坑指南</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
+              <div className="bg-white/90 p-3 rounded-xl border border-rose-100 space-y-1">
+                <div className="font-bold text-rose-800">⚠️ 1. 打樣開版費的攤提效應</div>
+                <p className="text-slate-600 leading-relaxed">
+                  打樣費是固定成本。若一款新品只印 30 個，300 元打樣費會讓單件硬生生多出 10 元成本！若產量小，務必如實填入打樣費，否則完售也會倒賠。
+                </p>
+              </div>
+
+              <div className="bg-white/90 p-3 rounded-xl border border-rose-100 space-y-1">
+                <div className="font-bold text-rose-800">⚠️ 2. 金流抽成是算「成交總額」</div>
+                <p className="text-slate-600 leading-relaxed">
+                  綠界、蝦皮、賣貨便手續費是從客人的付款總額扣趴，不是從利潤扣趴！若毛利抓太薄，平台手續費會直接吃掉你大半的辛苦利潤。
+                </p>
+              </div>
+
+              <div className="bg-white/90 p-3 rounded-xl border border-rose-100 space-y-1">
+                <div className="font-bold text-rose-800">⚠️ 3. 保留 45%~60% 以上的安全毛利</div>
+                <p className="text-slate-600 leading-relaxed">
+                  展場通常會有 10%~20% 剩餘庫存、公關贈品或套組折價促銷。毛利率若只有 25%，只要少賣幾件就會直接轉為虧損。
+                </p>
+              </div>
+
+              <div className="bg-white/90 p-3 rounded-xl border border-rose-100 space-y-1">
+                <div className="font-bold text-rose-800">⚠️ 4. 本機資料保存與備份</div>
+                <p className="text-slate-600 leading-relaxed">
+                  資料會自動即時存於目前瀏覽器 LocalStorage 中。若使用無痕視窗或更換電腦，建議隨時點擊「<strong>匯出 CSV 報表</strong>」做本地離線備份！
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Feature Highlights */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <Lightbulb className="w-4 h-4 text-amber-500" />
+              計算機實用小功能導覽
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1 shadow-2xs">
+                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-600" />
+                  卡片 / 試算表表格雙檢視切換
+                </div>
+                <p className="text-slate-600 leading-relaxed">
+                  右上角可自由切換「<strong>卡片詳細模式</strong>」（細調打樣、包材、繪師抽成）或「<strong>試算表清單模式</strong>」（大量品項排序、快速對照各款售價與總毛利）。
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1 shadow-2xs">
+                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                  方案眼睛切換（來回對比試算）
+                </div>
+                <p className="text-slate-600 leading-relaxed">
+                  每張卡片右上角設有<strong>眼睛圖示</strong>，可隨時「隱藏排除」特定商品不計入總額，方便你在不同企劃組合間切換比較總預算與回本難度。
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1 shadow-2xs">
+                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                  多件組合方案與獨立促銷折價
+                </div>
+                <p className="text-slate-600 leading-relaxed">
+                  可將卡片設為「<strong>多件合購方案</strong>」（如 4 件 T 恤一組），並<strong>單獨設定該方案折價趴數</strong>，清楚對照原價、折後價與獨立毛利，與全場折價完全分開。
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1 shadow-2xs">
+                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-rose-500" />
+                  展場與銷售情境動態模擬器
+                </div>
+                <p className="text-slate-600 leading-relaxed">
+                  頁面下方配有情境模擬器，可<strong>自訂手動輸入任意全場促銷幅度（%）</strong>與銷量比例，直接預覽扣除前期投入後，真正落入錢包的最終底線獲利！
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1 shadow-2xs">
+                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <BookMarked className="w-3.5 h-3.5 text-purple-600" />
+                  專有名詞小百科 (小 i 導覽)
+                </div>
+                <p className="text-slate-600 leading-relaxed">
+                  頂部導覽列與各卡片皆設有「<strong>小 i 圖示</strong>」，點開即可詳細查閱毛利率、純淨利、損益平衡點 (BEP)、安全銷售率的定義與同人實戰心法！
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -267,13 +248,27 @@ export const ReadmeModal: React.FC<ReadmeModalProps> = ({ isOpen, onClose }) => 
           <div className="text-[11px] text-slate-500 hidden sm:block">
             支援手機、平板與電腦全響應式操作，資料自動存於本機瀏覽器。
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-all cursor-pointer ml-auto"
-          >
-            我知道了，開始使用
-          </button>
+          <div className="flex items-center gap-2 ml-auto">
+            {onOpenGlossary && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenGlossary();
+                }}
+                className="px-3.5 py-2 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition-all cursor-pointer"
+              >
+                查看專有名詞小百科
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-all cursor-pointer"
+            >
+              我知道了，開始使用
+            </button>
+          </div>
         </div>
       </div>
     </div>

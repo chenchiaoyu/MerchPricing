@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Settings, Check, HelpCircle, CreditCard, Percent } from 'lucide-react';
+import { X, Settings, Check, HelpCircle, CreditCard, Percent, Truck } from 'lucide-react';
 import { GlobalSettings } from '../types';
 import { PAYMENT_CHANNELS } from '../data/presets';
 import { NumericInput } from './NumericInput';
@@ -167,6 +167,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
               <p className="text-xs text-slate-500 mt-1.5">
                 文創同人周邊通常建議維持在 45%~60%，以抵禦展場攤位費、庫存滯銷與運費成本。
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 text-teal-600" />
+                  免運方案每筆商家吸收運費預設值 (元)
+                </label>
+                <span className="text-[11px] text-slate-400 font-mono">超商常態約 60 元</span>
+              </div>
+              <div className="relative">
+                <NumericInput
+                  step={5}
+                  min={0}
+                  max={500}
+                  value={localSettings.defaultShippingSubsidy !== undefined ? localSettings.defaultShippingSubsidy : 60}
+                  onChange={(val) =>
+                    setLocalSettings({
+                      ...localSettings,
+                      defaultShippingSubsidy: val,
+                    })
+                  }
+                  className="w-full pl-3 pr-10 py-2 bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-indigo-600 outline-hidden font-mono shadow-2xs"
+                />
+                <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">元</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1.5">
+                當商品勾選「提供免運」時，系統預設填入的商家吸收補貼金額。
               </p>
             </div>
           </div>
