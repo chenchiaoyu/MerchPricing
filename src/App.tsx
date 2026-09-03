@@ -21,6 +21,7 @@ import { ScenarioSimulator } from './components/ScenarioSimulator';
 import { FinancialCompositionChart } from './components/FinancialCompositionChart';
 import { PresetModal } from './components/PresetModal';
 import { SettingsModal } from './components/SettingsModal';
+import { ReadmeModal } from './components/ReadmeModal';
 import { MerchandisePreset } from './data/presets';
 
 const STORAGE_KEY_PRODUCTS = 'merch_pricing_products_v2';
@@ -125,6 +126,7 @@ export function App() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isReadmeModalOpen, setIsReadmeModalOpen] = useState(false);
 
   // Save to local storage
   useEffect(() => {
@@ -266,6 +268,7 @@ export function App() {
         globalSettings={globalSettings}
         onOpenPresetModal={() => setIsPresetModalOpen(true)}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+        onOpenReadmeModal={() => setIsReadmeModalOpen(true)}
         onResetData={handleResetData}
         onAddNewProduct={handleAddNewProduct}
       />
@@ -401,6 +404,33 @@ export function App() {
 
         {/* 5. Overall Financial Composition Chart (Costs, Profit, Royalties, Platform Fees) */}
         <FinancialCompositionChart calculations={calculations} summary={summary} />
+
+        {/* 6. Footer Information & Quick README Access Bar */}
+        <div className="pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 pb-8">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-slate-700">周邊定價計算器 MerchPricing</span>
+            <span>・</span>
+            <span>專為文創同人創作者打造</span>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap justify-center">
+            <button
+              type="button"
+              onClick={() => setIsReadmeModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold border border-indigo-200/80 transition-colors cursor-pointer shadow-2xs"
+            >
+              <span>📖 開啟 README 使用手冊與連結</span>
+            </button>
+            <a
+              href="https://chenchiaoyu.github.io/MerchPricing/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-600 hover:text-indigo-600 font-mono transition-colors flex items-center gap-1"
+            >
+              <span>chenchiaoyu.github.io/MerchPricing</span>
+            </a>
+          </div>
+        </div>
       </main>
 
       {/* Modals */}
@@ -414,6 +444,10 @@ export function App() {
         onClose={() => setIsSettingsModalOpen(false)}
         settings={globalSettings}
         onSaveSettings={setGlobalSettings}
+      />
+      <ReadmeModal
+        isOpen={isReadmeModalOpen}
+        onClose={() => setIsReadmeModalOpen(false)}
       />
     </div>
   );

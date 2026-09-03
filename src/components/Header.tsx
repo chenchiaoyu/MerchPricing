@@ -8,6 +8,7 @@ import {
   Check,
   PackagePlus,
   Coins,
+  BookOpen,
 } from 'lucide-react';
 import { GlobalSettings, ProductCalculation, ProjectSummaryData } from '../types';
 import { exportToCSV, copySummaryText } from '../utils/pricing';
@@ -18,6 +19,7 @@ interface HeaderProps {
   globalSettings: GlobalSettings;
   onOpenPresetModal: () => void;
   onOpenSettingsModal: () => void;
+  onOpenReadmeModal: () => void;
   onResetData: () => void;
   onAddNewProduct: () => void;
 }
@@ -28,6 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
   globalSettings,
   onOpenPresetModal,
   onOpenSettingsModal,
+  onOpenReadmeModal,
   onResetData,
   onAddNewProduct,
 }) => {
@@ -70,6 +73,16 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* README Guide Button */}
+          <button
+            onClick={onOpenReadmeModal}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100/90 border border-indigo-200/80 rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
+            title="查看使用說明與直接使用網址"
+          >
+            <BookOpen className="w-4 h-4 text-indigo-600" />
+            <span>README 使用說明</span>
+          </button>
+
           {/* Presets Button */}
           <button
             onClick={onOpenPresetModal}
