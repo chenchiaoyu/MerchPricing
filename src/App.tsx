@@ -1,3 +1,9 @@
+/*!
+ * 商品定價小幫手 MerchPricing
+ * 視覺化圖表 Ｘ 拆解成本結構
+ * © 2026 chiaoyu design. All Rights Reserved
+ */
+
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   PackagePlus,
@@ -163,6 +169,19 @@ export function App() {
     setActiveGlossaryTermId(termId || null);
     setIsGlossaryModalOpen(true);
   };
+
+  // Console Watermark / Easter Egg for Developers
+  useEffect(() => {
+    console.log(
+      '%c 商品定價小幫手 MerchPricing %c © 2026 chiaoyu design. All Rights Reserved ',
+      'background: #4F46E5; color: #FFFFFF; font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 4px 0 0 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;',
+      'background: #1E1B4B; color: #C7D2FE; font-size: 12px; font-family: monospace; padding: 4px 8px; border-radius: 0 4px 4px 0;'
+    );
+    console.log(
+      '%c✨ 視覺化圖表 Ｘ 拆解成本結構 | 專為創作者與微型電商打造的定價財務工具',
+      'color: #6366F1; font-size: 11px; font-style: italic; padding: 2px 0;'
+    );
+  }, []);
 
   // Save to local storage
   useEffect(() => {

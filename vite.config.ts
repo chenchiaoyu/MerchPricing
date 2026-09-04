@@ -7,6 +7,9 @@ export default defineConfig(() => {
   return {
     base: './',
     plugins: [react(), tailwindcss()],
+    esbuild: {
+      legalComments: 'inline' as const,
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
