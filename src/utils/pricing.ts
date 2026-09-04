@@ -384,7 +384,7 @@ export function exportToCSV(
       .filter((it) => it.name && it.amount > 0)
       .map((it) => ` / ${it.name}: $${it.amount}`)
       .join('');
-    csv += `全場其他獨立支出,NT$ ${summary.totalOverheadCost.toLocaleString()} (運費: $${overheadExpenses?.shippingCost || 0} / 人力: $${overheadExpenses?.laborCost || 0} / 雜支: $${overheadExpenses?.extraCost || 0}${customItemsText}${freeShipText})\n`;
+    csv += `其他支出,NT$ ${summary.totalOverheadCost.toLocaleString()} (運費: $${overheadExpenses?.shippingCost || 0} / 人力: $${overheadExpenses?.laborCost || 0} / 雜支: $${overheadExpenses?.extraCost || 0}${customItemsText}${freeShipText})\n`;
   }
   if ((summary.totalShippingSubsidy || 0) > 0) {
     csv += `全場商家吸收運費總額,NT$ ${summary.totalShippingSubsidy?.toLocaleString()}\n`;

@@ -27,8 +27,11 @@ interface OverheadExpensesCardProps {
   onOpenGlossary?: (termId?: string) => void;
 }
 
-// 快速加入的常用獨立支出範本
+// 快速加入的常用獨立支出範本 (已合併進貨分攤運費、人力成本、其他雜支耗材至前面項目)
 const PRESET_CUSTOM_TEMPLATES = [
+  { name: '進貨分攤運費', amount: 500, note: '廠商大貨/宅配/展場貨運' },
+  { name: '人力成本', amount: 1200, note: '工讀顧攤/小精靈薪資津貼' },
+  { name: '其他雜支耗材', amount: 300, note: '膠帶/文具/防撞泡泡袋' },
   { name: '攤位報名/租金', amount: 1200, note: '同人展攤位費用' },
   { name: '展場交通車資', amount: 1500, note: '高鐵/台鐵/計程車' },
   { name: '展期住宿費用', amount: 2000, note: '飯店/民宿兩晚' },
@@ -141,117 +144,56 @@ export const OverheadExpensesCard: React.FC<OverheadExpensesCardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-base font-bold text-slate-900">
-                全場其他獨立支出（總額）
+                其他支出
               </h3>
               <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200">
                 統籌固定成本
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              獨立於各商品之外，不強行攤提至單一品項；可自由新增各類自訂項目，直接納入前期總投入並於利潤結算中扣除
+              獨立於各商品之外，不強行攤提至單一品項；可自由啟用各類支出項目，直接納入前期總投入並於利潤結算中扣除
             </p>
           </div>
         </div>
 
         {/* Total Badge */}
         <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200 self-start sm:self-auto shadow-2xs">
-          <span className="text-xs text-slate-500 font-medium">獨立支出合計：</span>
+          <span className="text-xs text-slate-500 font-medium">其他支出合計：</span>
           <span className="text-base font-bold font-mono text-amber-600">
             NT$ {total.toLocaleString()}
           </span>
         </div>
       </div>
 
-      {/* 3 Main Lump-sum Cost Inputs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* 1. 進貨分攤運費 (總額) */}
-        <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition-all space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <Truck className="w-3.5 h-3.5 text-blue-500" />
-              <span>進貨分攤運費 (總額)</span>
-            </label>
-            <span className="text-[10px] text-slate-400 font-mono">批次總計</span>
-          </div>
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-mono">NT$</span>
-            <NumericInput
-              value={expenses.shippingCost}
-              onChange={(val) => handleUpdate('shippingCost', Math.max(0, val || 0))}
-              className="w-full pl-10 pr-3 py-2 bg-white text-xs font-mono font-bold text-slate-800 rounded-lg border border-slate-200 focus:border-indigo-600 outline-hidden"
-              placeholder="0"
-            />
-          </div>
-          <p className="text-[11px] text-slate-500 leading-tight">
-            廠商大貨寄送物流、黑貓宅配或進出展場之搬運貨運總資費
-          </p>
-        </div>
-
-        {/* 2. 人力成本 (總額) */}
-        <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition-all space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5 text-emerald-600" />
-              <span>人力成本 (總額)</span>
-            </label>
-            <span className="text-[10px] text-slate-400 font-mono">批次總計</span>
-          </div>
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-mono">NT$</span>
-            <NumericInput
-              value={expenses.laborCost}
-              onChange={(val) => handleUpdate('laborCost', Math.max(0, val || 0))}
-              className="w-full pl-10 pr-3 py-2 bg-white text-xs font-mono font-bold text-slate-800 rounded-lg border border-slate-200 focus:border-indigo-600 outline-hidden"
-              placeholder="0"
-            />
-          </div>
-          <p className="text-[11px] text-slate-500 leading-tight">
-            如展期請 2 位工讀生/小精靈顧攤全日薪資、車馬費或伙食津貼
-          </p>
-        </div>
-
-        {/* 3. 其他雜支耗材 (總額) */}
-        <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition-all space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <PackageOpen className="w-3.5 h-3.5 text-purple-500" />
-              <span>其他雜支耗材 (總額)</span>
-            </label>
-            <span className="text-[10px] text-slate-400 font-mono">批次總計</span>
-          </div>
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-mono">NT$</span>
-            <NumericInput
-              value={expenses.extraCost}
-              onChange={(val) => handleUpdate('extraCost', Math.max(0, val || 0))}
-              className="w-full pl-10 pr-3 py-2 bg-white text-xs font-mono font-bold text-slate-800 rounded-lg border border-slate-200 focus:border-indigo-600 outline-hidden"
-              placeholder="0"
-            />
-          </div>
-          <p className="text-[11px] text-slate-500 leading-tight">
-            如膠帶、剪刀文具、防撞氣泡袋、零錢備金或一般損耗雜支
-          </p>
-        </div>
-      </div>
-
       {/* 自訂獨立支出項目列表 (需勾選才會打開功能) */}
-      <div className="p-4.5 rounded-xl border border-indigo-100 bg-indigo-50/30 space-y-3">
+      <div className="p-4.5 rounded-xl border border-indigo-100 bg-indigo-50/30 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <Tag className="w-4 h-4 text-indigo-600" />
             <span className="text-xs font-bold text-slate-900">
               自訂獨立支出項目
             </span>
-            {isCustomItemsEnabled && customItems.length > 0 && (
-              <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">
-                已啟用 {customItems.length} 項 (合計 NT$ {customItemsTotal.toLocaleString()})
-              </span>
-            )}
+            <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">
+              {isCustomItemsEnabled && customItems.length > 0
+                ? `已啟用 ${customItems.length} 項 (合計 NT$ ${customItemsTotal.toLocaleString()})`
+                : '彈性支出'}
+            </span>
           </div>
 
           <div className="flex items-center gap-3">
+            {isCustomItemsEnabled && (
+              <button
+                type="button"
+                onClick={() => handleAddCustomItem('自訂支出', 500, '')}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-white hover:bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 shadow-2xs transition-all cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>新增支出項目</span>
+              </button>
+            )}
+
             {/* 勾選開關 */}
-            <label className="flex items-center gap-1.5 cursor-pointer select-none text-xs font-semibold text-slate-700 bg-white/80 px-2.5 py-1 rounded-lg border border-indigo-200/80 shadow-2xs hover:border-indigo-400 transition-all">
+            <label className="flex items-center gap-1.5 cursor-pointer select-none text-xs font-semibold text-slate-700">
               <input
                 type="checkbox"
                 checked={isCustomItemsEnabled}
@@ -266,17 +208,6 @@ export const OverheadExpensesCard: React.FC<OverheadExpensesCardProps> = ({
               />
               <span>啟用自訂獨立支出</span>
             </label>
-
-            {isCustomItemsEnabled && (
-              <button
-                type="button"
-                onClick={() => handleAddCustomItem('自訂支出', 500, '')}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-white hover:bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 shadow-2xs transition-all cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>新增支出項目</span>
-              </button>
-            )}
           </div>
         </div>
 
@@ -365,21 +296,9 @@ export const OverheadExpensesCard: React.FC<OverheadExpensesCardProps> = ({
             )}
           </>
         ) : (
-          <div className="text-xs text-slate-500 flex items-center justify-between py-1 bg-white/60 px-3 rounded-lg border border-dashed border-indigo-200/80">
-            <span>未啟用自訂獨立支出（如攤位租金、車資、住宿費等），需勾選上方按鈕開啟功能。</span>
-            <button
-              type="button"
-              onClick={() => {
-                onChange({
-                  ...expenses,
-                  customItemsEnabled: true,
-                });
-              }}
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer shrink-0 ml-2"
-            >
-              + 勾選開啟功能
-            </button>
-          </div>
+          <p className="text-xs text-slate-500">
+            未啟用自訂獨立支出。若勾選開啟，可自訂攤位租金、車資、住宿等費用，費用將如實列入全場總成本。
+          </p>
         )}
       </div>
 
@@ -389,7 +308,7 @@ export const OverheadExpensesCard: React.FC<OverheadExpensesCardProps> = ({
           <div className="flex items-center gap-2">
             <Truck className="w-4 h-4 text-teal-700" />
             <span className="text-xs font-bold text-slate-900">
-              滿額免運費設定（由商家吸收）
+              滿額免運費設定
             </span>
             <span className="text-[10px] font-semibold text-teal-800 bg-teal-100 px-1.5 py-0.5 rounded">
               促銷補貼
