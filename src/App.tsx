@@ -57,62 +57,23 @@ const DEFAULT_OVERHEAD: OverheadExpenses = {
   freeShippingCost: 1200,
 };
 
-const DEFAULT_PRODUCTS: ProductItem[] = [
-  {
-    id: 'prod-sample-1',
-    name: '雙層壓克力立牌 (8cm)',
-    category: '壓克力周邊',
-    quantity: 50,
-    baseCost: 45,
-    sampleCost: 300,
-    packagingCost: 4,
-    shippingCost: 0,
-    laborCost: 0,
-    extraCost: 0,
-    customFee: false,
-    paymentFeeRate: 2.5,
-    paymentFixedFee: 0,
-    designerFeeType: 'none',
-    designerFeeValue: 0,
-    pricingMode: 'margin',
-    targetMargin: 50,
-    targetTotalProfit: 4000,
-    customPrice: 150,
-    freeShipping: false,
-    shippingSubsidy: 60,
-    productionDays: 14,
-  },
-  {
-    id: 'prod-sample-2',
-    name: '鐳射雙閃胸章套組 (58mm)',
-    category: '徽章周邊',
-    quantity: 80,
-    baseCost: 16,
-    sampleCost: 150,
-    packagingCost: 2,
-    shippingCost: 0,
-    laborCost: 0,
-    extraCost: 0,
-    customFee: false,
-    paymentFeeRate: 2.5,
-    paymentFixedFee: 0,
-    designerFeeType: 'none',
-    designerFeeValue: 0,
-    pricingMode: 'price',
-    targetMargin: 55,
-    targetTotalProfit: 3000,
-    customPrice: 80,
-    freeShipping: true,
-    shippingSubsidy: 60,
-    productionDays: 10,
-  },
-];
+const DEFAULT_PRODUCTS: ProductItem[] = [];
 
 export function App() {
   const [products, setProducts] = useState<ProductItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_PRODUCTS);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed: ProductItem[] = JSON.parse(saved);
+        // If the saved data only consists of the previous default sample products, clear to empty
+        const isLegacySampleOnly =
+          parsed.length === 2 &&
+          parsed.some((p) => p.id === 'prod-sample-1') &&
+          parsed.some((p) => p.id === 'prod-sample-2');
+        if (!isLegacySampleOnly) {
+          return parsed;
+        }
+      }
     } catch (e) {
       console.error('Failed to load products from storage', e);
     }

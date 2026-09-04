@@ -57,23 +57,6 @@ export const ReadmeModal: React.FC<ReadmeModalProps> = ({
 
         {/* Modal Content */}
         <div className="p-6 overflow-y-auto space-y-6 text-slate-700 text-xs sm:text-sm leading-relaxed">
-          {/* Open Source Statement & Credit Box */}
-          <div className="bg-amber-50/70 border border-amber-200/90 rounded-2xl p-4 sm:p-5 space-y-2">
-            <div className="flex items-center gap-2 text-amber-900 font-bold text-xs sm:text-sm">
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <span>開源聲明與引用鳴謝 (Credit & License)</span>
-            </div>
-            <p className="text-xs text-amber-800/90 leading-relaxed">
-              原則上這個網頁工具希望大家都可以<strong>自由開源或進行客製化模改使用</strong>。但如果可以的話，可以請任何如果要使用或引用這個版本的人，再幫我加入：
-            </p>
-            <div className="p-2.5 bg-white/95 rounded-xl border border-amber-200 font-mono text-xs font-semibold text-slate-800 flex items-center justify-between">
-              <span>「採用自 chiaoyu_design」</span>
-              <span className="text-[10px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md font-sans font-semibold">
-                感謝支持創作者！
-              </span>
-            </div>
-          </div>
-
           {/* Section 1: How to Start (Workflow) */}
           <div className="space-y-3.5">
             <div className="flex items-center justify-between">
