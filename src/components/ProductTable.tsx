@@ -251,8 +251,15 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   </td>
 
                   {/* Net Profit per Unit */}
-                  <td className="py-3 px-3 text-right font-mono font-semibold text-emerald-600">
-                    +NT$ {c.unitNetProfit}
+                  <td className="py-3 px-3 text-right font-mono">
+                    <div className="font-semibold text-emerald-600">
+                      +NT$ {(c.taxEnabled ? c.unitNetProfitAfterTax : c.unitNetProfit).toLocaleString()}
+                    </div>
+                    {c.taxEnabled && (
+                      <div className="text-[10px] text-amber-700 font-mono">
+                        稅前 ${c.unitNetProfit} (稅 -${c.unitTax})
+                      </div>
+                    )}
                   </td>
 
                   {/* Gross Margin */}
@@ -277,8 +284,15 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   </td>
 
                   {/* Total Profit */}
-                  <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
-                    NT$ {c.totalProfit.toLocaleString()}
+                  <td className="py-3 px-3 text-right font-mono">
+                    <div className="font-bold text-slate-900">
+                      NT$ {(c.taxEnabled ? c.totalProfitAfterTax : c.totalProfit).toLocaleString()}
+                    </div>
+                    {c.taxEnabled && (
+                      <div className="text-[10px] text-amber-700 font-mono">
+                        稅後 (稅 -${c.totalBusinessTax.toLocaleString()})
+                      </div>
+                    )}
                   </td>
 
                   {/* Actions */}

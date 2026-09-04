@@ -2,6 +2,24 @@ export type PricingMode = 'price' | 'profit' | 'margin';
 
 export type DesignerFeeType = 'none' | 'percent_profit' | 'percent_price' | 'fixed_per_unit' | 'percent_cost';
 
+export type TaxPricingType = 'inclusive' | 'exclusive'; // 含稅價 (內含) | 外加稅 (未稅)
+
+export interface TaxSettings {
+  enabled: boolean; // 是否啟用稅務試算
+  taxType: TaxPricingType; // 標價模式：含稅（內含）或未稅（外加）
+  businessTaxRate: number; // 營業稅率 % (如 5% 統一發票、1% 小規模營業人、0% 個人免稅)
+  incomeTaxRate: number; // 預估所得稅/營所稅率 % (如 0%、10%、20%)
+  deductInputTax: boolean; // 是否扣抵進項稅額 (原物料/製造採購發票抵扣)
+}
+
+export const DEFAULT_TAX_SETTINGS: TaxSettings = {
+  enabled: false,
+  taxType: 'inclusive',
+  businessTaxRate: 5,
+  incomeTaxRate: 0,
+  deductInputTax: false,
+};
+
 export interface ProductItem {
   id: string;
   name: string;
@@ -81,15 +99,24 @@ export interface ProductCalculation {
   isFreeShipping: boolean; // 是否享免運
   unitShippingSubsidy: number; // 商家每份吸收運費 (若免運)
   unitTotalCost: number; // 含所有抽成與商家吸收運費後的總成本 (每份方案)
-  unitNetProfit: number; // 每份方案實收淨利
+  unitNetProfit: number; // 每份方案實收淨利 (稅前)
   grossMargin: number; // 實際毛利率 % (以折後售價計算)
+  
+  // 稅務拆解 (每份方案)
+  unitTax: number; // 每份方案預估應納營業稅 (元)
+  unitIncomeTax: number; // 每份方案預估所得稅 (元)
+  unitNetProfitAfterTax: number; // 每份方案稅後實得純淨利 (元)
   
   // 批次總計
   totalProductionCost: number; // 總投入製造成本 (前期資金)
   totalShippingSubsidy: number; // 批次商家吸收運費總額
   totalRevenue: number; // 完售總營業額
-  totalProfit: number; // 完售總淨利
+  totalProfit: number; // 完售總淨利 (稅前)
   totalFees: number; // 總手續與抽成
+  totalBusinessTax: number; // 完售預估應納營業稅總額
+  totalIncomeTax: number; // 完售預估所得稅總額
+  totalTax: number; // 完售預估總稅負 (營業稅 + 所得稅)
+  totalProfitAfterTax: number; // 完售稅後總純淨利
   
   // 損益平衡
   breakEvenUnits: number; // 損益平衡需售出件數 (或套數)
@@ -140,6 +167,7 @@ export interface GlobalSettings {
   defaultTargetMargin: number; // 預設目標毛利率 %
   defaultShippingSubsidy?: number; // 預設每筆商家吸收運費金額 (元)
   currency: string; // 預設 'NT$'
+  taxSettings?: TaxSettings; // 稅務設定 (營業稅與營所稅)
 }
 
 export interface ProjectSummaryData {
@@ -152,8 +180,16 @@ export interface ProjectSummaryData {
   totalShippingSubsidy: number; // 全場商家吸收運費總額 (單品免運 + 滿額免運)
   totalUpfrontCost: number; // 總前期投入成本 (商品製造 + 獨立支出)
   totalPotentialRevenue: number; // 總預期營業額
-  totalPotentialProfit: number; // 總預期淨利 (已扣除商品成本、手續費、創作者抽成、商家吸收運費與全場獨立支出)
+  totalPotentialProfit: number; // 總預期淨利 (稅前，已扣除商品成本、手續費、創作者抽成、商家吸收運費與全場獨立支出)
   overallMargin: number; // 綜合毛利率 %
   overallROI: number; // 投資回報率 ROI %
   averageBreakEvenRate: number; // 平均保本率 %
+  
+  // 稅務匯總
+  taxEnabled: boolean; // 是否啟用稅務估算
+  totalBusinessTax: number; // 全場預估營業稅總額
+  totalIncomeTax: number; // 全場預估所得稅總額
+  totalTax: number; // 全場預估總稅負 (營業稅 + 所得稅)
+  totalProfitAfterTax: number; // 完售稅後總純淨利
+  effectiveTaxRate: number; // 實質稅負比率 % (總稅負 / 總營收)
 }

@@ -18,6 +18,7 @@ import {
   EyeOff,
   Package,
   Truck,
+  Receipt,
 } from 'lucide-react';
 import { ProductItem, ProductCalculation, GlobalSettings } from '../types';
 import { NumericInput } from './NumericInput';
@@ -921,8 +922,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     )}
                   </span>
                   <span className="text-emerald-700 font-mono font-bold bg-emerald-100/60 px-2 py-0.5 rounded-md">
-                    NT$ {calc.unitNetProfit.toLocaleString()}
+                    NT$ {(calc.taxEnabled ? calc.unitNetProfitAfterTax : calc.unitNetProfit).toLocaleString()}
                   </span>
+                  {calc.taxEnabled && (
+                    <span className="text-[11px] text-amber-800 font-mono bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                      稅前 ${calc.unitNetProfit.toLocaleString()}・預扣稅 ${calc.unitTax}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -1019,17 +1025,29 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Card Footer: Batch Totals */}
-      <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/70 text-xs flex items-center justify-between text-slate-500">
-        <div>
-          <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">完售總營收: </span>
-          <span className="font-mono font-bold text-slate-900">
-            NT$ {calc.totalRevenue.toLocaleString()}
-          </span>
+      <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/70 text-xs flex items-center justify-between text-slate-500 flex-wrap gap-2">
+        <div className="flex items-center gap-3">
+          <div>
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">完售總營收: </span>
+            <span className="font-mono font-bold text-slate-900">
+              NT$ {calc.totalRevenue.toLocaleString()}
+            </span>
+          </div>
+          {calc.taxEnabled && (
+            <div className="hidden sm:block">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-700">批次營業稅: </span>
+              <span className="font-mono font-bold text-amber-900">
+                NT$ {calc.totalBusinessTax.toLocaleString()}
+              </span>
+            </div>
+          )}
         </div>
         <div>
-          <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">完售總純利: </span>
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+            {calc.taxEnabled ? '完售稅後純利: ' : '完售總純利: '}
+          </span>
           <span className="font-mono font-bold text-emerald-600">
-            NT$ {calc.totalProfit.toLocaleString()}
+            NT$ {(calc.taxEnabled ? calc.totalProfitAfterTax : calc.totalProfit).toLocaleString()}
           </span>
         </div>
       </div>

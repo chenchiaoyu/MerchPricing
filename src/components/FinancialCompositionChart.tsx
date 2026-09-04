@@ -61,8 +61,8 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
     totalRevenue += c.finalUnitPrice * qty;
   }
 
-  // Final net profit taking into account global overhead expenses
-  const finalProjectProfit = summary.totalPotentialProfit;
+  // Final net profit taking into account global overhead expenses and tax
+  const finalProjectProfit = summary.taxEnabled ? summary.totalProfitAfterTax : summary.totalPotentialProfit;
   const overheadCost = summary.totalOverheadCost || 0;
   const totalShippingSubsidy = summary.totalShippingSubsidy || totalProductShippingSubsidy;
 
@@ -71,11 +71,13 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
   // Donut chart data for the overall pie
   const pieData = [
     {
-      name: '純淨利潤 (實拿)',
+      name: summary.taxEnabled ? '純淨利潤 (稅後實拿)' : '純淨利潤 (實拿)',
       value: Math.max(0, Math.round(finalProjectProfit)),
       color: '#10B981', // Emerald
       icon: TrendingUp,
-      desc: '扣除所有製作、金流抽成與全場獨立支出後最終入袋獲利',
+      desc: summary.taxEnabled
+        ? '扣除所有製作、運費吸收、金流抽成、全場支出及預估稅負後最終入袋實拿淨利'
+        : '扣除所有製作、金流抽成與全場獨立支出後最終入袋獲利',
     },
     {
       name: '裸品與開版打樣製造',
@@ -92,6 +94,16 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
       desc: '自黏袋、背卡、獨立包裝袋等',
     },
   ];
+
+  if (summary.taxEnabled && (summary.totalTax || 0) > 0) {
+    pieData.push({
+      name: '預估稅負 (營業稅/營所稅)',
+      value: Math.round(summary.totalTax),
+      color: '#D97706', // Amber
+      icon: Receipt,
+      desc: `預估應繳納之加值型營業稅 ($${summary.totalBusinessTax.toLocaleString()}) 與營所稅 ($${summary.totalIncomeTax.toLocaleString()})`,
+    });
+  }
 
   if (overheadCost > 0) {
     pieData.push({
@@ -140,7 +152,10 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
   const barData = calculations.map((c, idx) => ({
     name: c.product.name.length > 8 ? c.product.name.slice(0, 8) + '...' : c.product.name,
     fullName: c.product.name,
-    利潤: Math.max(0, Math.round(c.unitNetProfit * c.product.quantity)),
+    利潤: Math.max(
+      0,
+      Math.round((c.taxEnabled ? c.unitNetProfitAfterTax : c.unitNetProfit) * c.product.quantity)
+    ),
     製造原料: Math.round((c.unitBaseCost + c.unitSampleCost) * c.product.quantity),
     包裝物流: Math.round((c.unitPackagingCost + c.unitShippingCost) * c.product.quantity),
     金流與抽成: Math.round((c.unitPaymentFee + c.unitDesignerFee) * c.product.quantity),

@@ -137,12 +137,57 @@ export function calculateProduct(
   const unitNetProfit = finalUnitPrice - unitTotalCost;
   const grossMargin = finalUnitPrice > 0 ? (unitNetProfit / finalUnitPrice) * 100 : 0;
 
+  // 稅務拆解試算 (營業稅與所得稅)
+  let unitTax = 0;
+  let unitIncomeTax = 0;
+  let totalBusinessTax = 0;
+  let totalIncomeTax = 0;
+
+  if (globalSettings.taxSettings?.enabled) {
+    const taxSettings = globalSettings.taxSettings;
+    const busRate = Math.max(0, taxSettings.businessTaxRate || 0) / 100;
+    const incRate = Math.max(0, taxSettings.incomeTaxRate || 0) / 100;
+
+    let unitOutputTax = 0;
+    let unitInputTax = 0;
+
+    if (busRate > 0) {
+      if (taxSettings.taxType === 'inclusive') {
+        // 售價內含營業稅：銷項稅額 = 實收特惠價 * (稅率 / (1 + 稅率))
+        unitOutputTax = finalUnitPrice * (busRate / (1 + busRate));
+        if (taxSettings.deductInputTax) {
+          // 進項稅額扣抵：製造成本已含之進項稅額
+          unitInputTax = bundleDirectCost * (busRate / (1 + busRate));
+        }
+      } else {
+        // 售價外加稅：銷項稅額 = 實收特惠價 * 稅率
+        unitOutputTax = finalUnitPrice * busRate;
+        if (taxSettings.deductInputTax) {
+          unitInputTax = bundleDirectCost * busRate;
+        }
+      }
+      unitTax = Math.max(0, unitOutputTax - unitInputTax);
+      totalBusinessTax = unitTax * totalBundles;
+    }
+
+    // 預估所得稅 (以扣除營業稅後的正淨利為計算基底)
+    const taxableUnitProfit = Math.max(0, unitNetProfit - unitTax);
+    if (incRate > 0 && taxableUnitProfit > 0) {
+      unitIncomeTax = taxableUnitProfit * incRate;
+      totalIncomeTax = unitIncomeTax * totalBundles;
+    }
+  }
+
+  const totalTax = totalBusinessTax + totalIncomeTax;
+  const unitNetProfitAfterTax = unitNetProfit - unitTax - unitIncomeTax;
+
   // 批次總計 (以總製作件數或總組合套數計算)
   const totalProductionCost = unitDirectCost * quantity;
   const totalShippingSubsidy = unitShippingSubsidy * totalBundles;
   const totalRevenue = finalUnitPrice * totalBundles;
   const totalProfit = unitNetProfit * totalBundles;
   const totalFees = (unitPaymentFee + unitDesignerFee) * totalBundles;
+  const totalProfitAfterTax = totalProfit - totalTax;
 
   // 損益平衡
   // 每賣出一套方案實際進帳（扣除當次交易抽成與商家吸收之免運運費）：
@@ -203,11 +248,18 @@ export function calculateProduct(
     unitTotalCost: round2(unitTotalCost),
     unitNetProfit: round2(unitNetProfit),
     grossMargin: round1(grossMargin),
+    unitTax: round2(unitTax),
+    unitIncomeTax: round2(unitIncomeTax),
+    unitNetProfitAfterTax: round2(unitNetProfitAfterTax),
     totalProductionCost: round0(totalProductionCost),
     totalShippingSubsidy: round0(totalShippingSubsidy),
     totalRevenue: round0(totalRevenue),
     totalProfit: round0(totalProfit),
     totalFees: round0(totalFees),
+    totalBusinessTax: round0(totalBusinessTax),
+    totalIncomeTax: round0(totalIncomeTax),
+    totalTax: round0(totalTax),
+    totalProfitAfterTax: round0(totalProfitAfterTax),
     breakEvenUnits: Math.max(1, breakEvenUnits),
     breakEvenPercentage: round1(breakEvenPercentage),
     breakEvenRevenue: round0(breakEvenRevenue),
@@ -267,13 +319,15 @@ function generateSmartPrices(
 
 export function calculateProjectSummary(
   calculations: ProductCalculation[],
-  overheadExpenses?: OverheadExpenses
+  overheadExpenses?: OverheadExpenses,
+  globalSettings?: GlobalSettings
 ): ProjectSummaryData {
   const totalProductsCount = calculations.length;
   // 只計算未被隱藏排除的商品 (enabled !== false)
   const activeCalculations = calculations.filter((c) => c.product.enabled !== false);
   const activeProductsCount = activeCalculations.length;
   const excludedProductsCount = totalProductsCount - activeProductsCount;
+  const taxEnabled = Boolean(globalSettings?.taxSettings?.enabled);
 
   const customItemsTotal = overheadExpenses?.customItemsEnabled
     ? (overheadExpenses?.customItems || []).reduce(
@@ -305,6 +359,12 @@ export function calculateProjectSummary(
       overallMargin: 0,
       overallROI: 0,
       averageBreakEvenRate: 0,
+      taxEnabled,
+      totalBusinessTax: 0,
+      totalIncomeTax: 0,
+      totalTax: 0,
+      totalProfitAfterTax: -totalOverheadCost,
+      effectiveTaxRate: 0,
     };
   }
 
@@ -314,6 +374,7 @@ export function calculateProjectSummary(
   let totalProductProfit = 0;
   let totalProductShippingSubsidy = 0;
   let weightedBreakEvenSum = 0;
+  let totalBusinessTax = 0;
 
   for (const calc of activeCalculations) {
     const qty = calc.product.quantity;
@@ -322,6 +383,7 @@ export function calculateProjectSummary(
     totalPotentialRevenue += calc.totalRevenue;
     totalProductProfit += calc.totalProfit;
     totalProductShippingSubsidy += calc.totalShippingSubsidy || 0;
+    totalBusinessTax += calc.totalBusinessTax || 0;
     weightedBreakEvenSum += calc.breakEvenPercentage * qty;
   }
 
@@ -330,8 +392,23 @@ export function calculateProjectSummary(
 
   // 總前期投入 = 商品本體製作費用 + 全場獨立其他支出（總額）
   const totalUpfrontCost = totalProductionCost + totalOverheadCost;
-  // 總預期純淨利 = 商品總淨利 - 全場獨立其他支出（總額）
+  // 總預期純淨利 (稅前) = 商品總淨利 - 全場獨立其他支出（總額）
   const totalPotentialProfit = totalProductProfit - totalOverheadCost;
+
+  // 稅務結算 (營業稅 + 營所稅)
+  let totalIncomeTax = 0;
+  if (taxEnabled && (globalSettings?.taxSettings?.incomeTaxRate || 0) > 0) {
+    const incRate = (globalSettings?.taxSettings?.incomeTaxRate || 0) / 100;
+    // 扣除全場營業稅後的課稅淨利
+    const taxableNetProfit = Math.max(0, totalPotentialProfit - totalBusinessTax);
+    totalIncomeTax = round0(taxableNetProfit * incRate);
+  }
+
+  const totalTax = round0(totalBusinessTax + totalIncomeTax);
+  const totalProfitAfterTax = round0(totalPotentialProfit - totalTax);
+  const effectiveTaxRate = totalPotentialRevenue > 0
+    ? round1((totalTax / totalPotentialRevenue) * 100)
+    : 0;
 
   const overallMargin = totalPotentialRevenue > 0
     ? (totalPotentialProfit / totalPotentialRevenue) * 100
@@ -359,6 +436,12 @@ export function calculateProjectSummary(
     overallROI: round1(overallROI),
     averageBreakEvenRate: round1(averageBreakEvenRate),
     totalShippingSubsidy,
+    taxEnabled,
+    totalBusinessTax: round0(totalBusinessTax),
+    totalIncomeTax: round0(totalIncomeTax),
+    totalTax,
+    totalProfitAfterTax,
+    effectiveTaxRate,
   };
 }
 
@@ -391,20 +474,39 @@ export function exportToCSV(
   }
   csv += `前期總投入成本,NT$ ${summary.totalUpfrontCost.toLocaleString()}\n`;
   csv += `完售預期總營收,NT$ ${summary.totalPotentialRevenue.toLocaleString()}\n`;
-  csv += `完售預期總淨利,NT$ ${summary.totalPotentialProfit.toLocaleString()}\n`;
+  csv += `完售預期總淨利(稅前),NT$ ${summary.totalPotentialProfit.toLocaleString()}\n`;
+
+  if (summary.taxEnabled) {
+    const tax = globalSettings.taxSettings;
+    const taxTypeStr = tax?.taxType === 'inclusive' ? '售價已含稅 (內含)' : '售價未稅 (外加)';
+    csv += `稅務設定,${taxTypeStr} - 營業稅率: ${tax?.businessTaxRate || 0}% / 營所稅率: ${tax?.incomeTaxRate || 0}% / 進項抵扣: ${tax?.deductInputTax ? '是' : '否'}\n`;
+    csv += `預估應繳營業稅,NT$ ${summary.totalBusinessTax.toLocaleString()}\n`;
+    csv += `預估應繳營所稅,NT$ ${summary.totalIncomeTax.toLocaleString()}\n`;
+    csv += `預估全場合計稅負,NT$ ${summary.totalTax.toLocaleString()} (實質稅率 ${summary.effectiveTaxRate}%)\n`;
+    csv += `完售稅後總純淨利(實拿),NT$ ${summary.totalProfitAfterTax.toLocaleString()}\n`;
+  }
+
   csv += `全場綜合毛利率,${summary.overallMargin}%\n`;
   csv += `投資報酬率 (ROI),${summary.overallROI}%\n`;
   csv += `平均損益平衡率,${summary.averageBreakEvenRate}% (需賣出佔比)\n\n`;
 
   csv += '【商品與方案定價明細表】\n';
-  csv += '狀態,商品/方案名稱,分類,每份內含件數,總製作數量,方案套數,單件直接成本,方案直接成本,方案基準原價,方案獨立折價,實收特惠售價,是否免運(商家吸收),每份商家吸收運費,每份淨利,毛利率,總投入成本,預期總營收,預期總淨利,保本件數,保本率\n';
+  if (summary.taxEnabled) {
+    csv += '狀態,商品/方案名稱,分類,每份內含件數,總製作數量,方案套數,單件直接成本,方案直接成本,方案基準原價,方案獨立折價,實收特惠售價,是否免運(商家吸收),每份商家吸收運費,每份淨利(稅前),每份營業稅,每份稅後淨利,毛利率,總投入成本,預期總營收,預期總淨利(稅前),預估批次營業稅,批次稅後淨利,保本件數,保本率\n';
+  } else {
+    csv += '狀態,商品/方案名稱,分類,每份內含件數,總製作數量,方案套數,單件直接成本,方案直接成本,方案基準原價,方案獨立折價,實收特惠售價,是否免運(商家吸收),每份商家吸收運費,每份淨利,毛利率,總投入成本,預期總營收,預期總淨利,保本件數,保本率\n';
+  }
 
   for (const c of calculations) {
     const p = c.product;
     const status = p.enabled === false ? '已排除' : '計入中';
     const discountStr = c.discountPercent > 0 ? `${c.discountPercent}% off (省$${c.discountSavings})` : '原價(無折價)';
     const freeShipStatus = c.isFreeShipping ? `免運(吸收$${c.unitShippingSubsidy})` : '買家自付/無免運';
-    csv += `"${status}","${p.name}","${p.category || '周邊'}",${c.bundleUnits}件/份,${p.quantity}件,${c.totalBundles}份,NT$ ${c.unitDirectCost},NT$ ${c.bundleDirectCost},NT$ ${c.originalBundlePrice},"${discountStr}",NT$ ${c.finalUnitPrice},"${freeShipStatus}",NT$ ${c.unitShippingSubsidy},NT$ ${c.unitNetProfit},${c.grossMargin}%,NT$ ${c.totalProductionCost},NT$ ${c.totalRevenue},NT$ ${c.totalProfit},${c.breakEvenUnits}件,${c.breakEvenPercentage}%\n`;
+    if (summary.taxEnabled) {
+      csv += `"${status}","${p.name}","${p.category || '周邊'}",${c.bundleUnits}件/份,${p.quantity}件,${c.totalBundles}份,NT$ ${c.unitDirectCost},NT$ ${c.bundleDirectCost},NT$ ${c.originalBundlePrice},"${discountStr}",NT$ ${c.finalUnitPrice},"${freeShipStatus}",NT$ ${c.unitShippingSubsidy},NT$ ${c.unitNetProfit},NT$ ${c.unitTax},NT$ ${c.unitNetProfitAfterTax},${c.grossMargin}%,NT$ ${c.totalProductionCost},NT$ ${c.totalRevenue},NT$ ${c.totalProfit},NT$ ${c.totalBusinessTax},NT$ ${c.totalProfitAfterTax},${c.breakEvenUnits}件,${c.breakEvenPercentage}%\n`;
+    } else {
+      csv += `"${status}","${p.name}","${p.category || '周邊'}",${c.bundleUnits}件/份,${p.quantity}件,${c.totalBundles}份,NT$ ${c.unitDirectCost},NT$ ${c.bundleDirectCost},NT$ ${c.originalBundlePrice},"${discountStr}",NT$ ${c.finalUnitPrice},"${freeShipStatus}",NT$ ${c.unitShippingSubsidy},NT$ ${c.unitNetProfit},${c.grossMargin}%,NT$ ${c.totalProductionCost},NT$ ${c.totalRevenue},NT$ ${c.totalProfit},${c.breakEvenUnits}件,${c.breakEvenPercentage}%\n`;
+    }
   }
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

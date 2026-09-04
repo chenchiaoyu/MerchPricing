@@ -11,7 +11,7 @@ import {
   Info,
   Layers,
 } from 'lucide-react';
-import { ProductItem, GlobalSettings, OverheadExpenses } from './types';
+import { ProductItem, GlobalSettings, OverheadExpenses, DEFAULT_TAX_SETTINGS } from './types';
 import { calculateProduct, calculateProjectSummary } from './utils/pricing';
 import { Header } from './components/Header';
 import { ProjectSummary } from './components/ProjectSummary';
@@ -36,6 +36,7 @@ const DEFAULT_SETTINGS: GlobalSettings = {
   paymentFixedFee: 0,
   defaultTargetMargin: 45,
   currency: 'NT$',
+  taxSettings: DEFAULT_TAX_SETTINGS,
 };
 
 const DEFAULT_OVERHEAD: OverheadExpenses = {
@@ -115,7 +116,17 @@ export function App() {
   const [globalSettings, setGlobalSettings] = useState<GlobalSettings>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...DEFAULT_SETTINGS,
+          ...parsed,
+          taxSettings: {
+            ...DEFAULT_TAX_SETTINGS,
+            ...(parsed.taxSettings || {}),
+          },
+        };
+      }
     } catch (e) {
       console.error('Failed to load settings from storage', e);
     }
@@ -137,10 +148,16 @@ export function App() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [settingsModalTab, setSettingsModalTab] = useState<'general' | 'tax'>('general');
   const [isReadmeModalOpen, setIsReadmeModalOpen] = useState(false);
   const [isGlossaryModalOpen, setIsGlossaryModalOpen] = useState(false);
   const [isCsvImportModalOpen, setIsCsvImportModalOpen] = useState(false);
   const [activeGlossaryTermId, setActiveGlossaryTermId] = useState<string | null>(null);
+
+  const handleOpenSettingsModal = (tab: 'general' | 'tax' = 'general') => {
+    setSettingsModalTab(tab);
+    setIsSettingsModalOpen(true);
+  };
 
   const handleOpenGlossary = (termId?: string) => {
     setActiveGlossaryTermId(termId || null);
@@ -179,8 +196,8 @@ export function App() {
 
   // Project Summary Data
   const summary = useMemo(() => {
-    return calculateProjectSummary(calculations, overheadExpenses);
-  }, [calculations, overheadExpenses]);
+    return calculateProjectSummary(calculations, overheadExpenses, globalSettings);
+  }, [calculations, overheadExpenses, globalSettings]);
 
   // Categories list
   const categories = useMemo(() => {
@@ -307,7 +324,7 @@ export function App() {
         globalSettings={globalSettings}
         overheadExpenses={overheadExpenses}
         onOpenPresetModal={() => setIsPresetModalOpen(true)}
-        onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+        onOpenSettingsModal={handleOpenSettingsModal}
         onOpenReadmeModal={() => setIsReadmeModalOpen(true)}
         onOpenGlossaryModal={() => handleOpenGlossary()}
         onOpenCsvImportModal={() => setIsCsvImportModalOpen(true)}
@@ -323,6 +340,7 @@ export function App() {
           calculations={calculations}
           defaultTargetMargin={globalSettings.defaultTargetMargin}
           onOpenGlossary={handleOpenGlossary}
+          onOpenSettingsModal={handleOpenSettingsModal}
         />
 
         {/* 2. Global Shared Overhead Expenses (Shipping, Labor, Extra Supplies) */}
@@ -492,16 +510,11 @@ export function App() {
         <FinancialCompositionChart calculations={calculations} summary={summary} />
 
         {/* 6. Footer Information & Credit */}
-        <div className="pt-6 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 pb-8">
-          <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
-            <span className="font-semibold text-slate-700">周邊定價計算器 MerchPricing</span>
-            <span className="hidden sm:inline">・</span>
-            <span>開源專案採用自 <strong className="text-indigo-600 font-semibold">chiaoyu_design</strong></span>
-          </div>
-          <div className="text-slate-400 text-xs text-center sm:text-right">
-            創作者與同人誌周邊定價專用財務計算工具
-          </div>
-        </div>
+        <footer className="pt-8 pb-10 border-t border-slate-200/70 text-center">
+          <p className="text-xs text-slate-400 font-normal tracking-wide">
+            © 2026 chiaoyu design. All Rights Reserved
+          </p>
+        </footer>
       </main>
 
       {/* Modals */}
@@ -515,6 +528,7 @@ export function App() {
         onClose={() => setIsSettingsModalOpen(false)}
         settings={globalSettings}
         onSaveSettings={setGlobalSettings}
+        initialTab={settingsModalTab}
       />
       <ReadmeModal
         isOpen={isReadmeModalOpen}

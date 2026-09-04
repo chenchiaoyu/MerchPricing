@@ -111,3 +111,47 @@ export const PAYMENT_CHANNELS = [
   { id: 'myship', name: '7-11 賣貨便 (取貨付款)', rate: 0, fixed: 0, description: '免成交抽成，僅買方自付運費' },
   { id: 'event_cash', name: '展場/市集現場現金', rate: 0, fixed: 0, description: '無金流抽成 (0%)' },
 ];
+
+export interface TaxPreset {
+  id: string;
+  name: string;
+  businessRate: number;
+  incomeRate: number;
+  taxType: 'inclusive' | 'exclusive';
+  description: string;
+}
+
+export const TAX_PRESETS: TaxPreset[] = [
+  {
+    id: 'standard_invoice',
+    name: '開立統一發票 (一般營業人 5%)',
+    businessRate: 5,
+    incomeRate: 0,
+    taxType: 'inclusive',
+    description: '依法開立二聯/三聯式統一發票，標準營業稅率 5%（商品標價內含）',
+  },
+  {
+    id: 'small_business',
+    name: '小規模營業人 (查定課徵 1%)',
+    businessRate: 1,
+    incomeRate: 0,
+    taxType: 'inclusive',
+    description: '免開統一發票，由國稅局按季查定課徵 1% 營業稅',
+  },
+  {
+    id: 'exempt',
+    name: '個人兼職 / 未達營業稅起徵點 (0%)',
+    businessRate: 0,
+    incomeRate: 0,
+    taxType: 'inclusive',
+    description: '個人偶發銷售，或實體貨物月銷售額未達 8 萬元之免稅狀態',
+  },
+  {
+    id: 'company',
+    name: '公司行號 (5% 營業稅 + 20% 營所稅)',
+    businessRate: 5,
+    incomeRate: 20,
+    taxType: 'inclusive',
+    description: '開立 5% 統一發票，並依年度預估純益提列 20% 營利事業所得稅',
+  },
+];

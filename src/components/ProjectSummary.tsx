@@ -9,6 +9,8 @@ import {
   Layers,
   Sparkles,
   Info,
+  Receipt,
+  ArrowRight,
 } from 'lucide-react';
 import { ProjectSummaryData, ProductCalculation } from '../types';
 
@@ -17,6 +19,7 @@ interface ProjectSummaryProps {
   calculations: ProductCalculation[];
   defaultTargetMargin: number;
   onOpenGlossary?: (termId?: string) => void;
+  onOpenSettingsModal?: (tab?: 'general' | 'tax') => void;
 }
 
 export const ProjectSummary: React.FC<ProjectSummaryProps> = ({
@@ -24,6 +27,7 @@ export const ProjectSummary: React.FC<ProjectSummaryProps> = ({
   calculations,
   defaultTargetMargin,
   onOpenGlossary,
+  onOpenSettingsModal,
 }) => {
   const isMarginHealthy = summary.overallMargin >= defaultTargetMargin;
   const totalItems = calculations.length;
@@ -96,7 +100,7 @@ export const ProjectSummary: React.FC<ProjectSummaryProps> = ({
           <div className="flex items-center justify-between text-slate-500 mb-2.5">
             <span className="text-[11px] uppercase tracking-wider font-semibold text-emerald-800 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              完售純淨利潤
+              {summary.taxEnabled ? '完售稅後純利' : '完售純淨利潤'}
               {onOpenGlossary && (
                 <button
                   type="button"
@@ -113,12 +117,18 @@ export const ProjectSummary: React.FC<ProjectSummaryProps> = ({
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-mono font-bold text-emerald-600 tracking-tight">
-            NT$ {summary.totalPotentialProfit.toLocaleString()}
+            NT$ {(summary.taxEnabled ? summary.totalProfitAfterTax : summary.totalPotentialProfit).toLocaleString()}
           </div>
           <div className="text-[11px] font-mono mt-1.5 flex items-center gap-1.5 flex-wrap">
-            <span className="px-2 py-0.5 rounded-md bg-emerald-100/70 text-emerald-800 font-bold text-[10px]">
-              ROI 報酬率 {summary.overallROI >= 0 ? `+${summary.overallROI}%` : `${summary.overallROI}%`}
-            </span>
+            {summary.taxEnabled ? (
+              <span className="text-[10px] text-amber-700 font-medium bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                稅前 $ {summary.totalPotentialProfit.toLocaleString()} (扣稅 ${summary.totalTax.toLocaleString()})
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-md bg-emerald-100/70 text-emerald-800 font-bold text-[10px]">
+                ROI 報酬率 {summary.overallROI >= 0 ? `+${summary.overallROI}%` : `${summary.overallROI}%`}
+              </span>
+            )}
             {summary.totalOverheadCost > 0 && (
               <span className="text-[10px] text-slate-400">已扣除獨立支出</span>
             )}
@@ -198,6 +208,76 @@ export const ProjectSummary: React.FC<ProjectSummaryProps> = ({
           </div>
         </div>
       </div>
+
+      {/* 稅務試算概況看板 (啟用時展開，未啟用時提供友善入口) */}
+      {summary.taxEnabled ? (
+        <div className="bg-gradient-to-r from-amber-50/90 via-amber-50/50 to-orange-50/60 border-t border-amber-200/80 px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
+              <Receipt className="w-4 h-4" />
+            </div>
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="font-bold text-amber-950">稅務試算概況：</span>
+              <span className="text-slate-700">
+                預估營業稅{' '}
+                <strong className="font-mono text-slate-900 font-bold">
+                  NT$ {summary.totalBusinessTax.toLocaleString()}
+                </strong>
+              </span>
+              {summary.totalIncomeTax > 0 && (
+                <>
+                  <span className="text-slate-300">・</span>
+                  <span className="text-slate-700">
+                    預估營所稅{' '}
+                    <strong className="font-mono text-slate-900 font-bold">
+                      NT$ {summary.totalIncomeTax.toLocaleString()}
+                    </strong>
+                  </span>
+                </>
+              )}
+              <span className="text-slate-300">・</span>
+              <span className="text-slate-700">
+                合計稅負{' '}
+                <strong className="font-mono text-amber-800 font-bold">
+                  NT$ {summary.totalTax.toLocaleString()}
+                </strong>
+                <span className="text-[11px] text-slate-500 font-mono ml-1">
+                  (佔營業額 {summary.effectiveTaxRate}%)
+                </span>
+              </span>
+              <span className="text-slate-300">・</span>
+              <span className="text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded font-mono font-bold">
+                完售稅後實拿純利 NT$ {summary.totalProfitAfterTax.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onOpenSettingsModal?.('tax')}
+            className="inline-flex items-center gap-1 text-amber-900 hover:text-amber-950 font-bold hover:underline shrink-0 cursor-pointer text-xs self-end sm:self-auto"
+          >
+            <span>調整稅率設定</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ) : (
+        <div className="bg-slate-50/70 border-t border-slate-100 px-6 py-2.5 flex items-center justify-between text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <Receipt className="w-3.5 h-3.5 text-slate-400" />
+            <span>需評估開立統一發票 (5%)、小規模 (1%) 或個人免稅之稅負影響？</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => onOpenSettingsModal?.('tax')}
+            className="text-indigo-600 hover:text-indigo-700 font-semibold hover:underline cursor-pointer flex items-center gap-1"
+          >
+            <span>開啟稅務試算</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
+
