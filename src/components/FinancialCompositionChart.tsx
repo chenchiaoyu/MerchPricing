@@ -80,14 +80,14 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
     {
       name: '裸品與開版打樣製造',
       value: Math.round(rawProductionCost),
-      color: '#3B82F6', // Royal Blue
+      color: '#4F46E5', // Indigo
       icon: Layers,
       desc: '包含工廠單件裸品印製與開版打樣費',
     },
     {
       name: '商品包材耗材費',
       value: Math.round(totalPackagingCost),
-      color: '#8B5CF6', // Purple
+      color: '#8B5CF6', // Violet
       icon: Wallet,
       desc: '自黏袋、背卡、獨立包裝袋等',
     },
@@ -117,7 +117,7 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
     pieData.push({
       name: '金流手續費 (通道)',
       value: Math.round(totalPaymentFee),
-      color: '#06B6D4', // Cyan
+      color: '#64748B', // Slate
       icon: Receipt,
       desc: '刷卡、第三方支付、通路平台手續費',
     });
@@ -224,9 +224,9 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
                       <Cell
                         key={`cell-${index}`}
                         fill={entry.color}
-                        stroke={isHovered ? '#1E293B' : '#FFFFFF'}
-                        strokeWidth={isHovered ? 2.5 : 2}
-                        opacity={hoveredIndex === null || isHovered ? 1 : 0.4}
+                        stroke="#FFFFFF"
+                        strokeWidth={isHovered ? 3.5 : 2}
+                        opacity={hoveredIndex === null ? 1 : isHovered ? 1 : 0.55}
                         className="transition-all duration-200 cursor-pointer outline-hidden"
                         onMouseEnter={() => setHoveredIndex(index)}
                       />
@@ -302,12 +302,12 @@ export const FinancialCompositionChart: React.FC<FinancialCompositionChartProps>
                 onMouseLeave={() => setHoveredIndex(null)}
                 className={`p-4 rounded-xl border transition-all duration-150 shadow-xs flex flex-col justify-between cursor-pointer ${
                   isHovered
-                    ? 'bg-white ring-2 shadow-md -translate-y-0.5'
+                    ? 'bg-white shadow-md -translate-y-0.5'
                     : 'bg-slate-50/70 border-slate-100 hover:bg-white hover:border-slate-300/80'
                 }`}
                 style={{
-                  ringColor: isHovered ? item.color : 'transparent',
                   borderColor: isHovered ? item.color : undefined,
+                  boxShadow: isHovered ? `0 6px 18px -3px ${item.color}35` : undefined,
                 }}
               >
                 <div>

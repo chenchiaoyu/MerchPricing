@@ -134,21 +134,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
       {/* Card Header */}
       <div className="p-5 sm:p-6 border-b border-slate-100 bg-white">
+        {/* Tier 1: Title & Category on Left, Action buttons on Right */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            {/* Product Title Input */}
-            <div className="flex items-center gap-2 mb-2">
-              <input
-                type="text"
-                value={product.name}
-                onChange={(e) => onUpdate(product.id, { name: e.target.value })}
-                className="font-bold text-slate-900 text-lg sm:text-xl bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-600 outline-hidden w-full transition-colors pb-0.5"
-                placeholder="輸入商品或方案名稱"
-              />
-            </div>
-
-            {/* Category tag & Batch info */}
-            <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+            {/* Category tag & Free Shipping status */}
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <div className="relative">
                 <input
                   type="text"
@@ -158,76 +148,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   placeholder="分類標籤"
                 />
               </div>
-              <span className="text-slate-300">•</span>
-              
-              {/* 預計產量 */}
-              <div className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200/60">
-                <span className="text-slate-500">預計總做</span>
-                <NumericInput
-                  min={1}
-                  step={10}
-                  allowDecimals={false}
-                  value={product.quantity}
-                  onChange={(val) => onUpdate(product.id, { quantity: Math.max(1, Math.round(val)) })}
-                  className="w-14 px-1 py-0.5 font-mono font-bold text-slate-900 text-center outline-hidden bg-transparent"
-                />
-                <span className="text-slate-600 font-medium">件</span>
-              </div>
-              <span className="text-slate-300">•</span>
-
-              {/* 方案規格：每份件數 */}
-              <div
-                className="flex items-center gap-1 bg-indigo-50/50 px-2 py-0.5 rounded-lg border border-indigo-100"
-                title="每份方案內含幾件單品？例如 1 代表單件，4 代表 4 件組合套組"
-              >
-                <Package className="w-3.5 h-3.5 text-indigo-600" />
-                <span className="text-indigo-900 font-medium">每份</span>
-                <NumericInput
-                  min={1}
-                  step={1}
-                  allowDecimals={false}
-                  value={product.bundleUnits || 1}
-                  onChange={(val) => onUpdate(product.id, { bundleUnits: Math.max(1, Math.round(val)) })}
-                  className="w-9 px-0.5 py-0.5 font-mono text-center outline-hidden bg-white rounded border border-indigo-200 text-indigo-900 font-bold"
-                />
-                <span className="text-indigo-800 font-medium">件</span>
-                {(product.bundleUnits || 1) > 1 && (
-                  <span className="text-[10px] bg-indigo-600 text-white px-1.5 py-0.2 rounded font-bold ml-0.5">
-                    共 {calc.totalBundles} 組
-                  </span>
-                )}
-              </div>
-              <span className="text-slate-300">•</span>
-
-              {/* 工期 */}
-              <div className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200/60">
-                <Clock className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-slate-500">工期</span>
-                <NumericInput
-                  min={1}
-                  step={1}
-                  allowDecimals={false}
-                  value={product.productionDays}
-                  onChange={(val) => onUpdate(product.id, { productionDays: Math.max(1, Math.round(val)) })}
-                  className="w-9 px-0.5 py-0.5 font-mono text-center outline-hidden bg-transparent text-slate-900 font-bold"
-                />
-                <span className="text-slate-600">天</span>
-              </div>
-
               {product.freeShipping && (
-                <>
-                  <span className="text-slate-300">•</span>
-                  <div className="flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 text-emerald-800 text-[11px] font-bold">
-                    <Truck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>免運（吸收 NT$ {calc.unitShippingSubsidy}）</span>
-                  </div>
-                </>
+                <div className="flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 text-emerald-800 text-[11px] font-bold">
+                  <Truck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>免運（吸收 NT$ {calc.unitShippingSubsidy}）</span>
+                </div>
               )}
+            </div>
+
+            {/* Product Title Input */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={product.name}
+                onChange={(e) => onUpdate(product.id, { name: e.target.value })}
+                className="font-bold text-slate-900 text-lg sm:text-xl bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-600 outline-hidden w-full transition-colors pb-0.5"
+                placeholder="輸入商品或方案名稱"
+              />
             </div>
           </div>
 
           {/* Card Actions (Eye Toggle, Duplicate, Delete) */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
             {/* 眼睛按鈕：納入 / 隱藏計算 */}
             <button
               type="button"
@@ -272,12 +214,227 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Tier 2: 3 Specification Fields (預計總做、每份規格、工期) - 3 columns evenly distributed */}
+        <div className="grid grid-cols-3 gap-2 mt-3.5 pt-3 border-t border-slate-100">
+          {/* 1. 預計產量 */}
+          <div className="bg-slate-50/90 p-2 sm:p-2.5 rounded-xl border border-slate-200/70">
+            <div className="text-[11px] text-slate-500 font-medium mb-1">預計總做</div>
+            <div className="flex items-center gap-1">
+              <NumericInput
+                min={1}
+                step={10}
+                allowDecimals={false}
+                value={product.quantity}
+                onChange={(val) => onUpdate(product.id, { quantity: Math.max(1, Math.round(val)) })}
+                className="w-full px-1.5 py-1 font-mono font-bold text-slate-900 text-center outline-hidden bg-white rounded-lg border border-slate-200/80 shadow-2xs text-xs sm:text-sm"
+              />
+              <span className="text-xs text-slate-600 font-medium shrink-0">件</span>
+            </div>
+          </div>
+
+          {/* 2. 方案規格：每份件數 */}
+          <div
+            className="bg-indigo-50/40 p-2 sm:p-2.5 rounded-xl border border-indigo-100"
+            title="每份方案內含幾件單品？例如 1 代表單件，4 代表 4 件組合套組"
+          >
+            <div className="text-[11px] text-indigo-900 font-medium mb-1 flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <Package className="w-3 h-3 text-indigo-600 shrink-0" />
+                每份規格
+              </span>
+              {(product.bundleUnits || 1) > 1 && (
+                <span className="text-[10px] bg-indigo-600 text-white px-1 py-0.2 rounded font-bold shrink-0">
+                  {calc.totalBundles}組
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <NumericInput
+                min={1}
+                step={1}
+                allowDecimals={false}
+                value={product.bundleUnits || 1}
+                onChange={(val) => onUpdate(product.id, { bundleUnits: Math.max(1, Math.round(val)) })}
+                className="w-full px-1.5 py-1 font-mono text-center outline-hidden bg-white rounded-lg border border-indigo-200/90 text-indigo-950 font-bold shadow-2xs text-xs sm:text-sm"
+              />
+              <span className="text-xs text-indigo-800 font-medium shrink-0">件</span>
+            </div>
+          </div>
+
+          {/* 3. 工期 */}
+          <div className="bg-slate-50/90 p-2 sm:p-2.5 rounded-xl border border-slate-200/70">
+            <div className="text-[11px] text-slate-500 font-medium mb-1 flex items-center gap-1">
+              <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+              工期
+            </div>
+            <div className="flex items-center gap-1">
+              <NumericInput
+                min={1}
+                step={1}
+                allowDecimals={false}
+                value={product.productionDays}
+                onChange={(val) => onUpdate(product.id, { productionDays: Math.max(1, Math.round(val)) })}
+                className="w-full px-1.5 py-1 font-mono text-center outline-hidden bg-white rounded-lg border border-slate-200/80 text-slate-900 font-bold shadow-2xs text-xs sm:text-sm"
+              />
+              <span className="text-xs text-slate-600 font-medium shrink-0">天</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Main Body - 5 ordered sections: 1.主要成本、2.方案促銷折價、3.免運優惠、4.目前指定售價、5.損益平衡點 */}
+      {/* Main Body */}
       <div className="p-5 sm:p-6 space-y-5">
         {/* ========================================================= */}
-        {/* 1. 主要成本                                              */}
+        {/* 定價策略模式                                              */}
+        {/* ========================================================= */}
+        <div className="space-y-3">
+          {/* Visual Pricing Mode Selector (Rounded Tabs) */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+                定價策略模式
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100/80 rounded-xl border border-slate-200/60 text-xs">
+              <button
+                type="button"
+                onClick={() => handleModeChange('price')}
+                className={`py-2 px-1 font-semibold text-[11px] rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  product.pricingMode === 'price'
+                    ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Tag className="w-3.5 h-3.5 text-rose-500" />
+                <span>市場售價</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleModeChange('profit')}
+                className={`py-2 px-1 font-semibold text-[11px] rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  product.pricingMode === 'profit'
+                    ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5 text-amber-500" />
+                <span>總獲利目標</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleModeChange('margin')}
+                className={`py-2 px-1 font-semibold text-[11px] rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  product.pricingMode === 'margin'
+                    ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Percent className="w-3.5 h-3.5 text-indigo-600" />
+                <span>目標毛利率</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Pricing Strategy Control Inputs */}
+          <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200/70">
+            {product.pricingMode === 'price' && (
+              <div>
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-600 mb-2">
+                  <span>指定單件基準原價售價</span>
+                  <span className="text-[11px] text-slate-400">
+                    {calc.bundleUnits > 1
+                      ? `方案含 ${calc.bundleUnits} 件，原價合計 NT$ ${calc.originalBundlePrice.toLocaleString()}`
+                      : '直接指定單件原價'}
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-mono">NT$</span>
+                  <NumericInput
+                    min={1}
+                    step={5}
+                    value={product.customPrice ?? Math.round(calc.originalUnitPrice)}
+                    onChange={(val) => onUpdate(product.id, { customPrice: Math.max(1, val) })}
+                    className="w-full pl-11 pr-3 py-2 text-base font-mono font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 outline-hidden shadow-2xs"
+                  />
+                </div>
+              </div>
+            )}
+
+            {product.pricingMode === 'profit' && (
+              <div>
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-600 mb-2">
+                  <span>此方案全批次預期淨利潤</span>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    每組約實賺 NT$ {Math.round((product.targetTotalProfit || 0) / calc.totalBundles).toLocaleString()}
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-mono">NT$</span>
+                  <NumericInput
+                    min={0}
+                    step={100}
+                    value={product.targetTotalProfit}
+                    onChange={(val) => onUpdate(product.id, { targetTotalProfit: Math.max(0, val) })}
+                    className="w-full pl-11 pr-3 py-2 text-base font-mono font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 outline-hidden shadow-2xs"
+                  />
+                </div>
+              </div>
+            )}
+
+            {product.pricingMode === 'margin' && (
+              <div>
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-600 mb-2">
+                  <span className="flex items-center gap-1">
+                    設定期望目標毛利率
+                    {onOpenGlossary && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenGlossary('gross-margin')}
+                        className="text-slate-400 hover:text-indigo-600 cursor-pointer transition-colors"
+                        title="名詞說明：什麼是毛利率？"
+                      >
+                        <Info className="w-3 h-3" />
+                      </button>
+                    )}
+                  </span>
+                  <span className="font-mono text-indigo-600 font-bold text-sm">
+                    {product.targetMargin}%
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="10"
+                    max="85"
+                    step="1"
+                    value={product.targetMargin}
+                    onChange={(e) =>
+                      onUpdate(product.id, { targetMargin: parseFloat(e.target.value) || 40 })
+                    }
+                    className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+                  />
+                  <div className="relative">
+                    <NumericInput
+                      min={5}
+                      max={90}
+                      step={1}
+                      value={product.targetMargin}
+                      onChange={(val) => onUpdate(product.id, { targetMargin: val })}
+                      className="w-16 px-2 py-1.5 text-xs font-mono bg-white border border-slate-200 rounded-lg text-center font-bold text-slate-900 shadow-2xs"
+                    />
+                    <span className="absolute right-2 top-2 text-[10px] text-slate-400 font-mono">%</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ========================================================= */}
+        {/* 主要成本                                                  */}
         {/* ========================================================= */}
         <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2.5">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -703,154 +860,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* ========================================================= */}
-        {/* 4. 目前指定售價                                          */}
+        {/* 目前指定售價                                              */}
         {/* ========================================================= */}
-        <div className="space-y-3">
-          {/* Visual Pricing Mode Selector (Rounded Tabs) */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
-                定價策略模式
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100/80 rounded-xl border border-slate-200/60 text-xs">
-              <button
-                type="button"
-                onClick={() => handleModeChange('price')}
-                className={`py-2 px-1 font-semibold text-[11px] rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  product.pricingMode === 'price'
-                    ? 'bg-white text-slate-900 shadow-2xs font-bold'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                <Tag className="w-3.5 h-3.5 text-rose-500" />
-                <span>市場售價</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleModeChange('profit')}
-                className={`py-2 px-1 font-semibold text-[11px] rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  product.pricingMode === 'profit'
-                    ? 'bg-white text-slate-900 shadow-2xs font-bold'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5 text-amber-500" />
-                <span>總獲利目標</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleModeChange('margin')}
-                className={`py-2 px-1 font-semibold text-[11px] rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  product.pricingMode === 'margin'
-                    ? 'bg-white text-slate-900 shadow-2xs font-bold'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                <Percent className="w-3.5 h-3.5 text-indigo-600" />
-                <span>目標毛利率</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Pricing Strategy Control Inputs */}
-          <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200/70">
-            {product.pricingMode === 'price' && (
-              <div>
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-600 mb-2">
-                  <span>指定單件基準原價售價</span>
-                  <span className="text-[11px] text-slate-400">
-                    {calc.bundleUnits > 1
-                      ? `方案含 ${calc.bundleUnits} 件，原價合計 NT$ ${calc.originalBundlePrice.toLocaleString()}`
-                      : '直接指定單件原價'}
-                  </span>
-                </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-mono">NT$</span>
-                  <NumericInput
-                    min={1}
-                    step={5}
-                    value={product.customPrice ?? Math.round(calc.originalUnitPrice)}
-                    onChange={(val) => onUpdate(product.id, { customPrice: Math.max(1, val) })}
-                    className="w-full pl-11 pr-3 py-2 text-base font-mono font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 outline-hidden shadow-2xs"
-                  />
-                </div>
-              </div>
-            )}
-
-            {product.pricingMode === 'profit' && (
-              <div>
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-600 mb-2">
-                  <span>此方案全批次預期淨利潤</span>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    每組約實賺 NT$ {Math.round((product.targetTotalProfit || 0) / calc.totalBundles).toLocaleString()}
-                  </span>
-                </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-mono">NT$</span>
-                  <NumericInput
-                    min={0}
-                    step={100}
-                    value={product.targetTotalProfit}
-                    onChange={(val) => onUpdate(product.id, { targetTotalProfit: Math.max(0, val) })}
-                    className="w-full pl-11 pr-3 py-2 text-base font-mono font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 outline-hidden shadow-2xs"
-                  />
-                </div>
-              </div>
-            )}
-
-            {product.pricingMode === 'margin' && (
-              <div>
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-600 mb-2">
-                  <span className="flex items-center gap-1">
-                    設定期望目標毛利率
-                    {onOpenGlossary && (
-                      <button
-                        type="button"
-                        onClick={() => onOpenGlossary('gross-margin')}
-                        className="text-slate-400 hover:text-indigo-600 cursor-pointer transition-colors"
-                        title="名詞說明：什麼是毛利率？"
-                      >
-                        <Info className="w-3 h-3" />
-                      </button>
-                    )}
-                  </span>
-                  <span className="font-mono text-indigo-600 font-bold text-sm">
-                    {product.targetMargin}%
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min="10"
-                    max="85"
-                    step="1"
-                    value={product.targetMargin}
-                    onChange={(e) =>
-                      onUpdate(product.id, { targetMargin: parseFloat(e.target.value) || 40 })
-                    }
-                    className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
-                  />
-                  <div className="relative">
-                    <NumericInput
-                      min={5}
-                      max={90}
-                      step={1}
-                      value={product.targetMargin}
-                      onChange={(val) => onUpdate(product.id, { targetMargin: val })}
-                      className="w-16 px-2 py-1.5 text-xs font-mono bg-white border border-slate-200 rounded-lg text-center font-bold text-slate-900 shadow-2xs"
-                    />
-                    <span className="absolute right-2 top-2 text-[10px] text-slate-400 font-mono">%</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Hero Price & Margin Results Box (目前指定售價展示) */}
-          <div className={`p-5 rounded-2xl border border-slate-200/90 ${theme.lightBg} relative overflow-hidden`}>
+        {/* Hero Price & Margin Results Box (目前指定售價展示) */}
+        <div className={`p-5 rounded-2xl border border-slate-200/90 ${theme.lightBg} relative overflow-hidden`}>
             <div className="flex items-start justify-between flex-wrap gap-3">
               <div>
                 <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1 flex items-center gap-1">
@@ -942,7 +955,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               </div>
             </div>
           </div>
-        </div>
 
         {/* ========================================================= */}
         {/* 5. 損益平衡點                                            */}
